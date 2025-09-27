@@ -38,36 +38,36 @@ return new class extends Migration
 
        // Interests
         Schema::create('interests', function (Blueprint $table) {
-            $table->id('id_interest');
+            $table->id();
             $table->unsignedBigInteger('id_user');
-            $table->string('interest_name', 100);
+            $table->string('name', 100);
             $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
 
         // Hobbies
         Schema::create('hobbies', function (Blueprint $table) {
-            $table->id('id_hobby');
+            $table->id();
             $table->unsignedBigInteger('id_user');
-            $table->string('hobby_name', 100);
+            $table->string('name', 100);
             $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
 
         // Skills
         Schema::create('skills', function (Blueprint $table) {
-            $table->id('id_skill');
+            $table->id();
             $table->unsignedBigInteger('id_user');
-            $table->string('skill_name', 100);
+            $table->string('name', 100);
             $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
 
         // Class Schedules
         Schema::create('class_schedules', function (Blueprint $table) {
-            $table->id('id_schedule');
+            $table->id();
             $table->unsignedBigInteger('id_user');
-            $table->string('course_name', 100);
+            $table->string('name', 100);
             $table->string('day', 20);
             $table->string('time', 10);
             $table->string('lecturer', 100);
@@ -77,9 +77,9 @@ return new class extends Migration
 
         // Student Organizations (UKM)
         Schema::create('organizations', function (Blueprint $table) {
-            $table->id('id_org');
+            $table->id();
             $table->unsignedBigInteger('id_user');
-            $table->string('org_name', 100);
+            $table->string('name', 100);
             $table->text('description')->nullable();
             $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
             $table->timestamps();
@@ -87,9 +87,9 @@ return new class extends Migration
 
         // Assignments
         Schema::create('assignments', function (Blueprint $table) {
-            $table->id('id_assignment');
+            $table->id();
             $table->unsignedBigInteger('id_user');
-            $table->string('assignment_name', 150);
+            $table->string('name', 150);
             $table->date('deadline');
             $table->string('status', 20);
             $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
@@ -98,7 +98,7 @@ return new class extends Migration
 
         // Todo List
         Schema::create('todo_lists', function (Blueprint $table) {
-            $table->id('id_todo');
+            $table->id();
             $table->unsignedBigInteger('id_user');
             $table->string('activity', 150);
             $table->string('priority', 10);
@@ -109,7 +109,7 @@ return new class extends Migration
 
         // Work Experience
         Schema::create('work_experiences', function (Blueprint $table) {
-            $table->id('id_experience');
+            $table->id();
             $table->unsignedBigInteger('id_user');
             $table->string('position', 150);
             $table->string('company', 150);
@@ -123,7 +123,7 @@ return new class extends Migration
 
         // Education
         Schema::create('education', function (Blueprint $table) {
-            $table->id('id_education');
+            $table->id();
             $table->unsignedBigInteger('id_user');
             $table->string('degree', 150)->nullable();
             $table->string('institution', 150);
