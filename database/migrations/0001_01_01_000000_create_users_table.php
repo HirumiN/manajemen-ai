@@ -41,7 +41,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('id_user');
             $table->string('name', 100);
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
 
@@ -50,7 +50,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('id_user');
             $table->string('name', 100);
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
 
@@ -59,7 +59,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('id_user');
             $table->string('name', 100);
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
 
@@ -71,7 +71,7 @@ return new class extends Migration
             $table->string('day', 20);
             $table->string('time', 10);
             $table->string('lecturer', 100);
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
 
@@ -81,7 +81,7 @@ return new class extends Migration
             $table->unsignedBigInteger('id_user');
             $table->string('name', 100);
             $table->text('description')->nullable();
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
 
@@ -92,7 +92,7 @@ return new class extends Migration
             $table->string('name', 150);
             $table->date('deadline');
             $table->string('status', 20);
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
 
@@ -103,7 +103,7 @@ return new class extends Migration
             $table->string('activity', 150);
             $table->string('priority', 10);
             $table->string('status', 20);
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
 
@@ -117,7 +117,7 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->text('description')->nullable();
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
 
@@ -132,7 +132,7 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->decimal('gpa', 3, 2)->nullable();
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }
