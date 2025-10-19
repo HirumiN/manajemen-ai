@@ -75,6 +75,7 @@ return new class extends Migration
         Schema::create('organizations', function (Blueprint $table) {
             $table->id();
             $table->string('name', 100);
+            $table->string('role');
             $table->text('description')->nullable();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
@@ -85,16 +86,6 @@ return new class extends Migration
             $table->id();
             $table->string('name', 150);
             $table->date('deadline');
-            $table->string('status', 20);
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->timestamps();
-        });
-
-        // Todo List
-        Schema::create('todo_lists', function (Blueprint $table) {
-            $table->id();
-            $table->string('activity', 150);
-            $table->string('priority', 10);
             $table->string('status', 20);
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();

@@ -1,9 +1,11 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -17,19 +19,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
 import {
-    AlertCircle,
     BookOpen,
     Calendar,
     CheckCircle2,
-    Clock,
     Plus,
     Trash2,
-    User,
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -57,6 +55,13 @@ interface Organization {
     name: string;
     description: string;
 }
+
+type AssignmentType = 'tugas' | 'quiz' | 'uts' | 'uas' | 'project' | 'presentation';
+
+interface Day {
+    key: string;
+    label: string;
+}
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Akademik',
@@ -67,63 +72,170 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function AcademicPage() {
     const { classSchedules, assignments, organizations } = usePage()
         .props as any;
-    const [activeTab, setActiveTab] = useState('weekly');
-    const [showAddClassDialog, setShowAddClassDialog] = useState(false);
-    const [showAddAssignmentDialog, setShowAddAssignmentDialog] =
-        useState(false);
-    const [showAddOrgDialog, setShowAddOrgDialog] = useState(false);
 
-    const [newClass, setNewClass] = useState({
-        name: '',
-        lecturer: '',
-        time: '',
-        day: '',
-    });
+    // State for assignments
+    const [createOpen, setCreateOpen] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
+    const [title, setTitle] = useState('');
+    const [course, setCourse] = useState('');
+    const [type, setType] = useState<AssignmentType>('tugas');
+    const [dueDate, setDueDate] = useState('');
+    const [description, setDescription] = useState('');
+    const [error, setError] = useState('');
+    const [submitting, setSubmitting] = useState(false);
 
-    const [newAssignment, setNewAssignment] = useState({
-        name: '',
-        deadline: '',
-        status: 'pending',
-    });
+    // State for editing assignment
+    const [editTitle, setEditTitle] = useState('');
+    const [editCourse, setEditCourse] = useState('');
+    const [editType, setEditType] = useState<AssignmentType>('tugas');
+    const [editDueDate, setEditDueDate] = useState('');
+    const [editDescription, setEditDescription] = useState('');
+    const [savingEdit, setSavingEdit] = useState(false);
+    const [editId, setEditId] = useState<number | null>(null);
 
-    const [newOrganization, setNewOrganization] = useState({
-        name: '',
-        description: '',
-    });
+    // State for schedule
+    const [scheduleOpen, setScheduleOpen] = useState(false);
+    const [schDay, setSchDay] = useState('');
+    const [schType, setSchType] = useState('');
+    const [schCourseName, setSchCourseName] = useState('');
+    const [schCourseCode, setSchCourseCode] = useState('');
+    const [schLecturer, setSchLecturer] = useState('');
+    const [schRoom, setSchRoom] = useState('');
+    const [schStart, setSchStart] = useState('');
+    const [schEnd, setSchEnd] = useState('');
+    const [schCredits, setSchCredits] = useState(0);
+    const [schError, setSchError] = useState('');
+    const [savingSchedule, setSavingSchedule] = useState(false);
 
-    const days = [
-        'senin',
-        'selasa',
-        'rabu',
-        'kamis',
-        'jumat',
-        'sabtu',
-        'minggu',
+    // State for organization
+    const [orgOpen, setOrgOpen] = useState(false);
+    const [orgName, setOrgName] = useState('');
+    const [orgType, setOrgType] = useState('');
+    const [orgPosition, setOrgPosition] = useState('');
+    const [orgStart, setOrgStart] = useState('');
+    const [orgEnd, setOrgEnd] = useState('');
+    const [orgCurrent, setOrgCurrent] = useState(false);
+    const [orgError, setOrgError] = useState('');
+    const [savingOrg, setSavingOrg] = useState(false);
+
+    const days: Day[] = [
+        { key: 'senin', label: 'Senin' },
+        { key: 'selasa', label: 'Selasa' },
+        { key: 'rabu', label: 'Rabu' },
+        { key: 'kamis', label: 'Kamis' },
+        { key: 'jumat', label: 'Jumat' },
+        { key: 'sabtu', label: 'Sabtu' },
+        { key: 'minggu', label: 'Minggu' },
     ];
 
-    const handleAddClass = () => {
-        router.post('/schedule/store-class', newClass, {
-            onSuccess: () => {
-                setNewClass({ name: '', lecturer: '', time: '', day: '' });
-                setShowAddClassDialog(false);
-            },
-        });
-    };
-
     const handleAddAssignment = () => {
-        router.post('/schedule/store-assignment', newAssignment, {
+        setSubmitting(true);
+        setError('');
+        router.post('/schedule/store-assignment', {
+            name: title,
+            deadline: dueDate,
+            status: 'pending',
+        }, {
             onSuccess: () => {
-                setNewAssignment({ name: '', deadline: '', status: 'pending' });
-                setShowAddAssignmentDialog(false);
+                setTitle('');
+                setCourse('');
+                setType('tugas');
+                setDueDate('');
+                setDescription('');
+                setCreateOpen(false);
+                setSubmitting(false);
+            },
+            onError: (errors: any) => {
+                setError('Terjadi kesalahan saat menambahkan tugas');
+                setSubmitting(false);
             },
         });
     };
 
-    const handleAddOrganization = () => {
-        router.post('/schedule/store-organization', newOrganization, {
+    const openEdit = (id: number) => {
+        const assignment = assignments.find((a: Assignment) => a.id === id);
+        if (assignment) {
+            setEditId(id);
+            setEditTitle(assignment.name);
+            setEditCourse('');
+            setEditType('tugas');
+            setEditDueDate(assignment.deadline);
+            setEditDescription('');
+            setEditOpen(true);
+        }
+    };
+
+    const saveEdit = () => {
+        if (!editId) return;
+        setSavingEdit(true);
+        router.patch(`/schedule/update-assignment/${editId}`, {
+            name: editTitle,
+            deadline: editDueDate,
+            status: 'pending',
+        }, {
             onSuccess: () => {
-                setNewOrganization({ name: '', description: '' });
-                setShowAddOrgDialog(false);
+                setEditOpen(false);
+                setSavingEdit(false);
+            },
+            onError: () => {
+                setSavingEdit(false);
+            },
+        });
+    };
+
+    const markDone = (id: number) => {
+        router.patch(`/schedule/toggle-assignment/${id}`);
+    };
+
+    const handleAddSchedule = () => {
+        setSavingSchedule(true);
+        setSchError('');
+        router.post('/schedule/store-class', {
+            name: schCourseName,
+            day: schDay,
+            time: `${schStart}-${schEnd}`,
+            lecturer: schLecturer,
+        }, {
+            onSuccess: () => {
+                setSchCourseName('');
+                setSchDay('');
+                setSchType('');
+                setSchCourseCode('');
+                setSchLecturer('');
+                setSchRoom('');
+                setSchStart('');
+                setSchEnd('');
+                setSchCredits(0);
+                setScheduleOpen(false);
+                setSavingSchedule(false);
+            },
+            onError: (errors: any) => {
+                setSchError('Terjadi kesalahan saat menambahkan jadwal');
+                setSavingSchedule(false);
+            },
+        });
+    };
+
+    const handleAddOrg = () => {
+        setSavingOrg(true);
+        setOrgError('');
+        router.post('/schedule/store-organization', {
+            name: orgName,
+            description: '',
+        }, {
+            onSuccess: () => {
+                setOrgName('');
+                setOrgType('');
+                setOrgPosition('');
+                setOrgStart('');
+                setOrgEnd('');
+                setOrgCurrent(false);
+                setOrgOpen(false);
+                setSavingOrg(false);
+            },
+            onError: (errors: any) => {
+                setOrgError('Terjadi kesalahan saat menambahkan organisasi');
+                setSavingOrg(false);
             },
         });
     };
@@ -185,560 +297,552 @@ export default function AcademicPage() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Akademik" />
             <div className="flex flex-1 flex-col gap-4 p-4">
-                <div className="flex items-center justify-between">
+
+
+      {/* Row 1: Tugas Akademik + Jadwal Kuliah (Tabs: Hari Ini / Mingguan) */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Tugas Akademik */}
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-2">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Tugas Akademik
+              </CardTitle>
+              <CardDescription>Kelola dan tambahkan tugas kuliah Anda</CardDescription>
+            </div>
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Tugas
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {assignments.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">Belum ada tugas akademik</p>
+            ) : (
+              assignments.map((assignment: Assignment) => (
+                <div key={assignment.id} className="p-3 border rounded-lg">
+                  <div className="mb-1 flex items-start justify-between gap-2">
                     <div>
-                        <h1 className="text-3xl font-bold">Akademik</h1>
-                        <p className="text-muted-foreground">
-                            Kelola jadwal kuliah, tugas, dan organisasi yang
-                            diikuti
-                        </p>
+                      <h4 className="font-medium text-sm">{assignment.name}</h4>
+                      <p className="text-xs text-muted-foreground mb-1">Tugas</p>
+                      <p className="text-xs text-muted-foreground">
+                        Deadline: {new Date(assignment.deadline).toLocaleDateString("id-ID")}
+                      </p>
                     </div>
+                    <div className="flex shrink-0 gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEdit(assignment.id)}
+                        aria-label="Edit tugas"
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => markDone(assignment.id)}
+                        aria-label="Selesai"
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        Selesai
+                      </Button>
+                    </div>
+                  </div>
                 </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
 
-                <Tabs
-                    value={activeTab}
-                    onValueChange={setActiveTab}
-                    className="w-full"
+        {/* Jadwal Kuliah */}
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-2">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Jadwal Kuliah
+              </CardTitle>
+              <CardDescription>Jadwal kuliah mingguan</CardDescription>
+            </div>
+            <Button size="sm" onClick={() => setScheduleOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Jadwal
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {days.map((day) => {
+                const courses = classSchedules.filter((cls: ClassSchedule) => cls.day.toLowerCase() === day.key.toLowerCase());
+                return (
+                  <div
+                    key={day.key}
+                    className="rounded-lg border p-3"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        <span className="font-medium">{day.label}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">{courses.length} mata kuliah</span>
+                    </div>
+                    <div className="space-y-2">
+                      {courses.map((course: ClassSchedule) => (
+                        <div key={course.id} className="flex items-center justify-between rounded-md border p-3">
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <h4 className="font-medium">{course.name}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {course.lecturer}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {course.time}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Organisasi yang Diikuti */}
+      <div className="grid gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-2">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Organisasi yang Diikuti
+              </CardTitle>
+            </div>
+            <Button size="sm" onClick={() => setOrgOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Organisasi
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {organizations.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">Belum ada organisasi yang diikuti</p>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {organizations.map((org: any) => (
+                  <div key={org.id} className="p-3 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium">{org.name}</h4>
+                      <Badge variant="outline">{String(org.type || "").toUpperCase()}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{org.position}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {new Date(org.startDate).toLocaleDateString("id-ID", { year: "numeric", month: "long" })} -{" "}
+                      {org.current
+                        ? "Sekarang"
+                        : org.endDate
+                          ? new Date(org.endDate).toLocaleDateString("id-ID", { year: "numeric", month: "long" })
+                          : ""}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Dialog: Tambah Tugas */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Tambah Tugas</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="title" className="text-sm font-medium">
+                  Judul Tugas
+                </label>
+                <Input
+                  id="title"
+                  placeholder="Contoh: Tugas Besar RPL"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="course" className="text-sm font-medium">
+                  Mata Kuliah
+                </label>
+                <Input
+                  id="course"
+                  placeholder="Contoh: Rekayasa Perangkat Lunak"
+                  value={course}
+                  onChange={(e) => setCourse(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="type" className="text-sm font-medium">
+                  Jenis Tugas
+                </label>
+                <select
+                  id="type"
+                  value={type}
+                  onChange={(e) => setType(e.target.value as AssignmentType)}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                    <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="weekly">
-                            Jadwal Mingguan
-                        </TabsTrigger>
-                        <TabsTrigger value="assignments">
-                            Tugas & Deadline
-                        </TabsTrigger>
-                        <TabsTrigger value="organizations">
-                            Organisasi yang Diikuti
-                        </TabsTrigger>
-                    </TabsList>
+                  <option value="tugas">Tugas</option>
+                  <option value="quiz">Quiz</option>
+                  <option value="uts">UTS</option>
+                  <option value="uas">UAS</option>
+                  <option value="project">Project</option>
+                  <option value="presentation">Presentasi</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="dueDate" className="text-sm font-medium">
+                  Deadline
+                </label>
+                <Input id="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              </div>
+            </div>
 
-                    {/* Weekly Schedule Tab */}
-                    <TabsContent value="weekly" className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-semibold">
-                                Jadwal Kuliah Mingguan
-                            </h2>
-                            <Dialog
-                                open={showAddClassDialog}
-                                onOpenChange={setShowAddClassDialog}
-                            >
-                                <DialogTrigger asChild>
-                                    <Button>
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Tambah Kelas
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>
-                                            Tambah Kelas Baru
-                                        </DialogTitle>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label>Mata Kuliah</Label>
-                                            <Input
-                                                value={newClass.name}
-                                                onChange={(e) =>
-                                                    setNewClass({
-                                                        ...newClass,
-                                                        name: e.target.value,
-                                                    })
-                                                }
-                                                placeholder="Nama mata kuliah"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>Dosen</Label>
-                                            <Input
-                                                value={newClass.lecturer}
-                                                onChange={(e) =>
-                                                    setNewClass({
-                                                        ...newClass,
-                                                        lecturer:
-                                                            e.target.value,
-                                                    })
-                                                }
-                                                placeholder="Nama dosen"
-                                            />
-                                        </div>
-                                        <div className="grid gap-4 md:grid-cols-2">
-                                            <div>
-                                                <Label>Waktu</Label>
-                                                <Input
-                                                    value={newClass.time}
-                                                    onChange={(e) =>
-                                                        setNewClass({
-                                                            ...newClass,
-                                                            time: e.target
-                                                                .value,
-                                                        })
-                                                    }
-                                                    placeholder="08:00 - 10:00"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label>Hari</Label>
-                                                <Select
-                                                    value={newClass.day}
-                                                    onValueChange={(value) =>
-                                                        setNewClass({
-                                                            ...newClass,
-                                                            day: value,
-                                                        })
-                                                    }
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Pilih hari" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {days.map((day) => (
-                                                            <SelectItem
-                                                                key={day}
-                                                                value={day}
-                                                            >
-                                                                {day
-                                                                    .charAt(0)
-                                                                    .toUpperCase() +
-                                                                    day.slice(
-                                                                        1,
-                                                                    )}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        </div>
-                                        <Button
-                                            onClick={handleAddClass}
-                                            className="w-full"
-                                        >
-                                            Tambah Kelas
-                                        </Button>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
+            <div className="space-y-1.5">
+              <label htmlFor="description" className="text-sm font-medium">
+                Deskripsi (opsional)
+              </label>
+              <Textarea
+                id="description"
+                placeholder="Detail singkat tugas..."
+                value={description}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
 
-                        <div className="grid gap-4">
-                            {days.map((day) => {
-                                const dayClasses = getClassesByDay(day);
-                                return (
-                                    <Card key={day}>
-                                        <CardHeader>
-                                            <CardTitle className="flex items-center gap-2">
-                                                <Calendar className="h-5 w-5" />
-                                                {day.charAt(0).toUpperCase() +
-                                                    day.slice(1)}
-                                                <Badge variant="outline">
-                                                    {dayClasses.length} kelas
-                                                </Badge>
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            {dayClasses.length === 0 ? (
-                                                <p className="py-4 text-center text-muted-foreground">
-                                                    Tidak ada kelas hari ini
-                                                </p>
-                                            ) : (
-                                                <div className="space-y-3">
-                                                    {dayClasses.map(
-                                                        (
-                                                            cls: ClassSchedule,
-                                                        ) => (
-                                                            <div
-                                                                key={cls.id}
-                                                                className="flex items-center justify-between rounded-lg border p-3"
-                                                            >
-                                                                <div className="flex items-center gap-3">
-                                                                    <div>
-                                                                        <h4 className="font-semibold">
-                                                                            {
-                                                                                cls.name
-                                                                            }
-                                                                        </h4>
-                                                                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                                            <span className="flex items-center gap-1">
-                                                                                <User className="h-3 w-3" />
-                                                                                {
-                                                                                    cls.lecturer
-                                                                                }
-                                                                            </span>
-                                                                            <span className="flex items-center gap-1">
-                                                                                <Clock className="h-3 w-3" />
-                                                                                {
-                                                                                    cls.time
-                                                                                }
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    onClick={() =>
-                                                                        deleteClass(
-                                                                            cls.id,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </Button>
-                                                            </div>
-                                                        ),
-                                                    )}
-                                                </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                );
-                            })}
-                        </div>
-                    </TabsContent>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Batal</Button>
+            <Button onClick={handleAddAssignment} disabled={submitting}>
+              {submitting ? "Menambahkan..." : "Tambah Tugas"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-                    {/* Assignments Tab */}
-                    <TabsContent value="assignments" className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-semibold">
-                                Tugas & Deadline
-                            </h2>
-                            <Dialog
-                                open={showAddAssignmentDialog}
-                                onOpenChange={setShowAddAssignmentDialog}
-                            >
-                                <DialogTrigger asChild>
-                                    <Button>
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Tambah Tugas
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>
-                                            Tambah Tugas Baru
-                                        </DialogTitle>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label>Judul Tugas</Label>
-                                            <Input
-                                                value={newAssignment.name}
-                                                onChange={(e) =>
-                                                    setNewAssignment({
-                                                        ...newAssignment,
-                                                        name: e.target.value,
-                                                    })
-                                                }
-                                                placeholder="Judul tugas"
-                                            />
-                                        </div>
-                                        <div className="grid gap-4 md:grid-cols-2">
-                                            <div>
-                                                <Label>Deadline</Label>
-                                                <Input
-                                                    type="date"
-                                                    value={
-                                                        newAssignment.deadline
-                                                    }
-                                                    onChange={(e) =>
-                                                        setNewAssignment({
-                                                            ...newAssignment,
-                                                            deadline:
-                                                                e.target.value,
-                                                        })
-                                                    }
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label>Status</Label>
-                                                <Select
-                                                    value={newAssignment.status}
-                                                    onValueChange={(value) =>
-                                                        setNewAssignment({
-                                                            ...newAssignment,
-                                                            status: value,
-                                                        })
-                                                    }
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="pending">
-                                                            Pending
-                                                        </SelectItem>
-                                                        <SelectItem value="in-progress">
-                                                            In Progress
-                                                        </SelectItem>
-                                                        <SelectItem value="completed">
-                                                            Completed
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        </div>
-                                        <Button
-                                            onClick={handleAddAssignment}
-                                            className="w-full"
-                                        >
-                                            Tambah Tugas
-                                        </Button>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
+      {/* Dialog: Edit Tugas */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Tugas</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="edit-title" className="text-sm font-medium">
+                  Judul Tugas
+                </label>
+                <Input
+                  id="edit-title"
+                  placeholder="Judul tugas"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="edit-course" className="text-sm font-medium">
+                  Mata Kuliah
+                </label>
+                <Input
+                  id="edit-course"
+                  placeholder="Nama mata kuliah"
+                  value={editCourse}
+                  onChange={(e) => setEditCourse(e.target.value)}
+                />
+              </div>
+            </div>
 
-                        <div className="space-y-4">
-                            {assignments.map((assignment: Assignment) => {
-                                const daysUntilDue = getDaysUntilDue(
-                                    assignment.deadline,
-                                );
-                                const isOverdue = daysUntilDue < 0;
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="edit-type" className="text-sm font-medium">
+                  Jenis Tugas
+                </label>
+                <select
+                  id="edit-type"
+                  value={editType}
+                  onChange={(e) => setEditType(e.target.value as AssignmentType)}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="tugas">Tugas</option>
+                  <option value="quiz">Quiz</option>
+                  <option value="uts">UTS</option>
+                  <option value="uas">UAS</option>
+                  <option value="project">Project</option>
+                  <option value="presentation">Presentasi</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="edit-due" className="text-sm font-medium">
+                  Deadline
+                </label>
+                <Input id="edit-due" type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} />
+              </div>
+            </div>
 
-                                return (
-                                    <Card
-                                        key={assignment.id}
-                                        className={
-                                            isOverdue
-                                                ? 'border-red-200 bg-red-50'
-                                                : ''
-                                        }
-                                    >
-                                        <CardContent className="pt-6">
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex flex-1 items-start gap-3">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            toggleAssignmentStatus(
-                                                                assignment.id,
-                                                            )
-                                                        }
-                                                        className="mt-1"
-                                                    >
-                                                        {assignment.status ===
-                                                        'completed' ? (
-                                                            <CheckCircle2 className="h-5 w-5 text-green-600" />
-                                                        ) : assignment.status ===
-                                                          'in-progress' ? (
-                                                            <Clock className="h-5 w-5 text-blue-600" />
-                                                        ) : (
-                                                            <AlertCircle className="h-5 w-5 text-gray-400" />
-                                                        )}
-                                                    </Button>
-                                                    <div className="flex-1">
-                                                        <div className="mb-2 flex items-center gap-2">
-                                                            <h3
-                                                                className={`font-semibold ${assignment.status === 'completed' ? 'text-muted-foreground line-through' : ''}`}
-                                                            >
-                                                                {
-                                                                    assignment.name
-                                                                }
-                                                            </h3>
-                                                            <Badge
-                                                                className={getStatusColor(
-                                                                    assignment.status,
-                                                                )}
-                                                                variant="outline"
-                                                            >
-                                                                {assignment.status ===
-                                                                'completed'
-                                                                    ? 'Selesai'
-                                                                    : assignment.status ===
-                                                                        'in-progress'
-                                                                      ? 'Dikerjakan'
-                                                                      : 'Pending'}
-                                                            </Badge>
-                                                        </div>
-                                                        <div className="mb-2 flex items-center gap-4 text-sm text-muted-foreground">
-                                                            <span className="flex items-center gap-1">
-                                                                <Calendar className="h-3 w-3" />
-                                                                {formatDate(
-                                                                    assignment.deadline,
-                                                                )}
-                                                            </span>
-                                                            {isOverdue && (
-                                                                <Badge
-                                                                    variant="destructive"
-                                                                    className="text-xs"
-                                                                >
-                                                                    Terlambat{' '}
-                                                                    {Math.abs(
-                                                                        daysUntilDue,
-                                                                    )}{' '}
-                                                                    hari
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        deleteAssignment(
-                                                            assignment.id,
-                                                        )
-                                                    }
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                );
-                            })}
-                        </div>
+            <div className="space-y-1.5">
+              <label htmlFor="edit-desc" className="text-sm font-medium">
+                Deskripsi (opsional)
+              </label>
+              <Textarea
+                id="edit-desc"
+                placeholder="Detail singkat tugas..."
+                value={editDescription}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setEditOpen(false)}>Batal</Button>
+            <Button onClick={saveEdit} disabled={savingEdit || !editId}>
+              {savingEdit ? "Menyimpan..." : "Simpan Perubahan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-                        {assignments.length === 0 && (
-                            <Card>
-                                <CardContent className="pt-6">
-                                    <div className="py-8 text-center">
-                                        <BookOpen className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-                                        <p className="text-lg font-medium">
-                                            Belum ada tugas
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Tambah tugas baru untuk mulai
-                                            mengelola deadline Anda
-                                        </p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </TabsContent>
+      {/* Dialog: Tambah Jadwal Kuliah */}
+      <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Tambah Jadwal Kuliah</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="sch-day" className="text-sm font-medium">
+                  Hari
+                </label>
+                <select
+                  id="sch-day"
+                  value={schDay}
+                  onChange={(e) => setSchDay(e.target.value)}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {days.map((d) => (
+                    <option key={d.key} value={d.key}>
+                      {d.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="sch-type" className="text-sm font-medium">
+                  Tipe
+                </label>
+                <select
+                  id="sch-type"
+                  value={schType}
+                  onChange={(e) => setSchType(e.target.value)}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="lecture">Lecture</option>
+                  <option value="practicum">Practicum</option>
+                  <option value="seminar">Seminar</option>
+                </select>
+              </div>
+            </div>
 
-                    {/* Organizations Tab */}
-                    <TabsContent value="organizations" className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-semibold">
-                                Organisasi yang Diikuti
-                            </h2>
-                            <Dialog
-                                open={showAddOrgDialog}
-                                onOpenChange={setShowAddOrgDialog}
-                            >
-                                <DialogTrigger asChild>
-                                    <Button>
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Tambah Organisasi
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>
-                                            Tambah Organisasi
-                                        </DialogTitle>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label>Nama Organisasi</Label>
-                                            <Input
-                                                value={newOrganization.name}
-                                                onChange={(e) =>
-                                                    setNewOrganization({
-                                                        ...newOrganization,
-                                                        name: e.target.value,
-                                                    })
-                                                }
-                                                placeholder="Nama organisasi"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>Deskripsi</Label>
-                                            <Textarea
-                                                value={
-                                                    newOrganization.description
-                                                }
-                                                onChange={(e) =>
-                                                    setNewOrganization({
-                                                        ...newOrganization,
-                                                        description:
-                                                            e.target.value,
-                                                    })
-                                                }
-                                                placeholder="Deskripsi organisasi"
-                                                rows={3}
-                                            />
-                                        </div>
-                                        <Button
-                                            onClick={handleAddOrganization}
-                                            className="w-full"
-                                        >
-                                            Tambah Organisasi
-                                        </Button>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="sch-name" className="text-sm font-medium">
+                  Nama Mata Kuliah
+                </label>
+                <Input
+                  id="sch-name"
+                  placeholder="Contoh: RPL"
+                  value={schCourseName}
+                  onChange={(e) => setSchCourseName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="sch-code" className="text-sm font-medium">
+                  Kode
+                </label>
+                <Input
+                  id="sch-code"
+                  placeholder="Contoh: IF3021"
+                  value={schCourseCode}
+                  onChange={(e) => setSchCourseCode(e.target.value)}
+                />
+              </div>
+            </div>
 
-                        {/* Organizations List */}
-                        <div className="space-y-4">
-                            {organizations.length === 0 ? (
-                                <Card>
-                                    <CardContent className="py-12 text-center">
-                                        <Users className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-                                        <h3 className="mb-2 text-lg font-semibold">
-                                            Belum ada organisasi
-                                        </h3>
-                                        <p className="mb-4 text-muted-foreground">
-                                            Mulai tambahkan organisasi dan
-                                            kegiatan ekstrakurikuler yang pernah
-                                            Anda ikuti
-                                        </p>
-                                        <Button
-                                            onClick={() =>
-                                                setShowAddOrgDialog(true)
-                                            }
-                                        >
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Tambah Organisasi Pertama
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            ) : (
-                                <div className="grid gap-4">
-                                    {organizations.map((org: Organization) => (
-                                        <Card key={org.id}>
-                                            <CardHeader>
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex-1">
-                                                        <CardTitle className="flex items-center gap-2">
-                                                            <Users className="h-5 w-5" />
-                                                            {org.name}
-                                                        </CardTitle>
-                                                    </div>
-                                                    <Button
-                                                        onClick={() =>
-                                                            deleteOrganization(
-                                                                org.id,
-                                                            )
-                                                        }
-                                                        variant="ghost"
-                                                        size="sm"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="space-y-4">
-                                                    {org.description && (
-                                                        <p className="text-sm text-gray-700">
-                                                            {org.description}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </TabsContent>
-                </Tabs>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="sch-lecturer" className="text-sm font-medium">
+                  Dosen
+                </label>
+                <Input
+                  id="sch-lecturer"
+                  placeholder="Nama dosen"
+                  value={schLecturer}
+                  onChange={(e) => setSchLecturer(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="sch-room" className="text-sm font-medium">
+                  Ruang
+                </label>
+                <Input
+                  id="sch-room"
+                  placeholder="Contoh: Gd A-203"
+                  value={schRoom}
+                  onChange={(e) => setSchRoom(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <label htmlFor="sch-start" className="text-sm font-medium">
+                  Mulai
+                </label>
+                <Input id="sch-start" type="time" value={schStart} onChange={(e) => setSchStart(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="sch-end" className="text-sm font-medium">
+                  Selesai
+                </label>
+                <Input id="sch-end" type="time" value={schEnd} onChange={(e) => setSchEnd(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="sch-credits" className="text-sm font-medium">
+                  SKS
+                </label>
+                <Input
+                  id="sch-credits"
+                  type="number"
+                  min={1}
+                  max={6}
+                  value={schCredits}
+                  onChange={(e) => setSchCredits(Number(e.target.value))}
+                />
+              </div>
+            </div>
+
+            {schError && <p className="text-sm text-red-600">{schError}</p>}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setScheduleOpen(false)}>Batal</Button>
+            <Button onClick={handleAddSchedule} disabled={savingSchedule}>
+              {savingSchedule ? "Menyimpan..." : "Tambah Jadwal"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Tambah Organisasi */}
+      <Dialog open={orgOpen} onOpenChange={setOrgOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Tambah Organisasi</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="org-name" className="text-sm font-medium">
+                  Nama Organisasi
+                </label>
+                <Input
+                  id="org-name"
+                  placeholder="Contoh: GDSC"
+                  value={orgName}
+                  onChange={(e) => setOrgName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="org-type" className="text-sm font-medium">
+                  Tipe
+                </label>
+                <select
+                  id="org-type"
+                  value={orgType}
+                  onChange={(e) => setOrgType(e.target.value)}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="komunitas">Komunitas</option>
+                  <option value="organisasi">Organisasi</option>
+                  <option value="ukm">UKM</option>
+                  <option value="hmj">HMJ</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="org-position" className="text-sm font-medium">
+                Jabatan
+              </label>
+              <Input
+                id="org-position"
+                placeholder="Contoh: Core Team"
+                value={orgPosition}
+                onChange={(e) => setOrgPosition(e.target.value)}
+              />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="org-start" className="text-sm font-medium">
+                  Mulai
+                </label>
+                <Input id="org-start" type="date" value={orgStart} onChange={(e) => setOrgStart(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="org-end" className="text-sm font-medium">
+                    Selesai
+                  </label>
+                  <label className="text-xs flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={orgCurrent}
+                      onChange={(e) => setOrgCurrent(e.target.checked)}
+                      className="h-4 w-4"
+                      aria-label="Masih aktif"
+                    />
+                    Saat ini
+                  </label>
+                </div>
+                <Input
+                  id="org-end"
+                  type="date"
+                  disabled={orgCurrent}
+                  value={orgEnd}
+                  onChange={(e) => setOrgEnd(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {orgError && <p className="text-sm text-red-600">{orgError}</p>}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setOrgOpen(false)}>Batal</Button>
+            <Button onClick={handleAddOrg} disabled={savingOrg}>
+              {savingOrg ? "Menyimpan..." : "Tambah Organisasi"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
             </div>
         </AppLayout>
-    );
+    )
 }
