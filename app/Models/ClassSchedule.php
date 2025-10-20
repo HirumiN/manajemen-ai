@@ -13,8 +13,11 @@ class ClassSchedule extends Model
     protected $fillable = [
         'name',
         'day',
-        'time',
+        'start_time',
+        'end_time',
         'lecturer',
+        'room',
+        'credits',
         'user_id',
     ];
 

@@ -39,8 +39,11 @@ interface ClassSchedule {
     id: number;
     name: string;
     day: string;
-    time: string;
+    start_time: string;
+    end_time: string;
     lecturer: string;
+    room?: string;
+    credits?: number;
 }
 
 interface Assignment {
@@ -56,7 +59,7 @@ interface Organization {
     description: string;
 }
 
-type AssignmentType = 'tugas' | 'quiz' | 'uts' | 'uas' | 'project' | 'presentation';
+type AssignmentType = 'akademik' | 'non akademik';
 
 interface Day {
     key: string;
@@ -78,7 +81,7 @@ export default function AcademicPage() {
     const [editOpen, setEditOpen] = useState(false);
     const [title, setTitle] = useState('');
     const [course, setCourse] = useState('');
-    const [type, setType] = useState<AssignmentType>('tugas');
+    const [type, setType] = useState<AssignmentType>('akademik');
     const [dueDate, setDueDate] = useState('');
     const [description, setDescription] = useState('');
     const [error, setError] = useState('');
@@ -87,7 +90,7 @@ export default function AcademicPage() {
     // State for editing assignment
     const [editTitle, setEditTitle] = useState('');
     const [editCourse, setEditCourse] = useState('');
-    const [editType, setEditType] = useState<AssignmentType>('tugas');
+    const [editType, setEditType] = useState<AssignmentType>('akademik');
     const [editDueDate, setEditDueDate] = useState('');
     const [editDescription, setEditDescription] = useState('');
     const [savingEdit, setSavingEdit] = useState(false);
@@ -139,14 +142,14 @@ export default function AcademicPage() {
             onSuccess: () => {
                 setTitle('');
                 setCourse('');
-                setType('tugas');
+                setType('akademik');
                 setDueDate('');
                 setDescription('');
                 setCreateOpen(false);
                 setSubmitting(false);
             },
             onError: (errors: any) => {
-                setError('Terjadi kesalahan saat menambahkan tugas');
+                setError('Terjadi kesalahan saat menambahkan todo');
                 setSubmitting(false);
             },
         });
@@ -158,7 +161,7 @@ export default function AcademicPage() {
             setEditId(id);
             setEditTitle(assignment.name);
             setEditCourse('');
-            setEditType('tugas');
+            setEditType('akademik');
             setEditDueDate(assignment.deadline);
             setEditDescription('');
             setEditOpen(true);
@@ -307,25 +310,25 @@ export default function AcademicPage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
-                Tugas Akademik
+                Todo Akademik
               </CardTitle>
-              <CardDescription>Kelola dan tambahkan tugas kuliah Anda</CardDescription>
+              <CardDescription>Kelola dan tambahkan todo kuliah Anda</CardDescription>
             </div>
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               <Plus className="h-4 w-4 mr-1" />
-              Tugas
+              Todo
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             {assignments.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">Belum ada tugas akademik</p>
+              <p className="text-muted-foreground text-center py-8">Belum ada todo akademik</p>
             ) : (
               assignments.map((assignment: Assignment) => (
                 <div key={assignment.id} className="p-3 border rounded-lg">
                   <div className="mb-1 flex items-start justify-between gap-2">
                     <div>
                       <h4 className="font-medium text-sm">{assignment.name}</h4>
-                      <p className="text-xs text-muted-foreground mb-1">Tugas</p>
+                      <p className="text-xs text-muted-foreground mb-1">Todo</p>
                       <p className="text-xs text-muted-foreground">
                         Deadline: {new Date(assignment.deadline).toLocaleDateString("id-ID")}
                       </p>
@@ -335,7 +338,7 @@ export default function AcademicPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => openEdit(assignment.id)}
-                        aria-label="Edit tugas"
+                        aria-label="Edit todo"
                       >
                         Edit
                       </Button>
@@ -343,7 +346,7 @@ export default function AcademicPage() {
                         variant="secondary"
                         size="sm"
                         onClick={() => markDone(assignment.id)}
-                        aria-label="Selesai"
+                        aria-label="Done"
                       >
                         <CheckCircle2 className="h-4 w-4 mr-1" />
                         Selesai
@@ -375,7 +378,7 @@ export default function AcademicPage() {
             <div className="space-y-4">
               {days.map((day) => {
                 const courses = classSchedules.filter((cls: ClassSchedule) => cls.day.toLowerCase() === day.key.toLowerCase());
-                return (
+                return courses.length > 0 ? (
                   <div
                     key={day.key}
                     className="rounded-lg border p-3"
@@ -397,7 +400,7 @@ export default function AcademicPage() {
                                 {course.lecturer}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                {course.time}
+                                {course.start_time} - {course.end_time}
                               </p>
                             </div>
                           </div>
@@ -405,7 +408,7 @@ export default function AcademicPage() {
                       ))}
                     </div>
                   </div>
-                );
+                ) : null;
               })}
             </div>
           </CardContent>
@@ -459,38 +462,28 @@ export default function AcademicPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Tambah Tugas</DialogTitle>
+            <DialogTitle>Tambah Todo</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label htmlFor="title" className="text-sm font-medium">
-                  Judul Tugas
+                  Nama Todo
                 </label>
                 <Input
                   id="title"
-                  placeholder="Contoh: Tugas Besar RPL"
+                  placeholder="Contoh: Presentasi Desain"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
-                <label htmlFor="course" className="text-sm font-medium">
-                  Mata Kuliah
-                </label>
-                <Input
-                  id="course"
-                  placeholder="Contoh: Rekayasa Perangkat Lunak"
-                  value={course}
-                  onChange={(e) => setCourse(e.target.value)}
-                />
-              </div>
+             
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label htmlFor="type" className="text-sm font-medium">
-                  Jenis Tugas
+                  Jenis Todo
                 </label>
                 <select
                   id="type"
@@ -498,12 +491,8 @@ export default function AcademicPage() {
                   onChange={(e) => setType(e.target.value as AssignmentType)}
                   className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <option value="tugas">Tugas</option>
-                  <option value="quiz">Quiz</option>
-                  <option value="uts">UTS</option>
-                  <option value="uas">UAS</option>
-                  <option value="project">Project</option>
-                  <option value="presentation">Presentasi</option>
+                  <option value="akademik">Akademik</option>
+                  <option value="non akademik">Non Akademik</option>
                 </select>
               </div>
               <div className="space-y-1.5">
@@ -515,12 +504,12 @@ export default function AcademicPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="description" className="text-sm font-medium">
-                Deskripsi (opsional)
-              </label>
+                <label htmlFor="description" className="text-sm font-medium">
+                  Deskripsi Todo (opsional)
+                </label>
               <Textarea
                 id="description"
-                placeholder="Detail singkat tugas..."
+                placeholder="Detail singkat todo..."
                 value={description}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                 rows={3}
@@ -532,7 +521,7 @@ export default function AcademicPage() {
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Batal</Button>
             <Button onClick={handleAddAssignment} disabled={submitting}>
-              {submitting ? "Menambahkan..." : "Tambah Tugas"}
+              {submitting ? "Menambahkan..." : "Tambah Todo"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -542,38 +531,28 @@ export default function AcademicPage() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit Tugas</DialogTitle>
+            <DialogTitle>Edit Todo</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label htmlFor="edit-title" className="text-sm font-medium">
-                  Judul Tugas
+                  Judul Todo
                 </label>
                 <Input
                   id="edit-title"
-                  placeholder="Judul tugas"
+                  placeholder="Judul todo"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
-                <label htmlFor="edit-course" className="text-sm font-medium">
-                  Mata Kuliah
-                </label>
-                <Input
-                  id="edit-course"
-                  placeholder="Nama mata kuliah"
-                  value={editCourse}
-                  onChange={(e) => setEditCourse(e.target.value)}
-                />
-              </div>
+             
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label htmlFor="edit-type" className="text-sm font-medium">
-                  Jenis Tugas
+                  Jenis Todo
                 </label>
                 <select
                   id="edit-type"
@@ -581,12 +560,8 @@ export default function AcademicPage() {
                   onChange={(e) => setEditType(e.target.value as AssignmentType)}
                   className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <option value="tugas">Tugas</option>
-                  <option value="quiz">Quiz</option>
-                  <option value="uts">UTS</option>
-                  <option value="uas">UAS</option>
-                  <option value="project">Project</option>
-                  <option value="presentation">Presentasi</option>
+                  <option value="akademik">Akademik</option>
+                  <option value="non akademik">Non Akademik</option>
                 </select>
               </div>
               <div className="space-y-1.5">
@@ -599,11 +574,11 @@ export default function AcademicPage() {
 
             <div className="space-y-1.5">
               <label htmlFor="edit-desc" className="text-sm font-medium">
-                Deskripsi (opsional)
+                Deskripsi Todo (opsional)
               </label>
               <Textarea
                 id="edit-desc"
-                placeholder="Detail singkat tugas..."
+                placeholder="Detail singkat todo..."
                 value={editDescription}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditDescription(e.target.value)}
                 rows={3}
@@ -644,21 +619,7 @@ export default function AcademicPage() {
                   ))}
                 </select>
               </div>
-              <div className="space-y-1.5">
-                <label htmlFor="sch-type" className="text-sm font-medium">
-                  Tipe
-                </label>
-                <select
-                  id="sch-type"
-                  value={schType}
-                  onChange={(e) => setSchType(e.target.value)}
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="lecture">Lecture</option>
-                  <option value="practicum">Practicum</option>
-                  <option value="seminar">Seminar</option>
-                </select>
-              </div>
+            
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -673,17 +634,7 @@ export default function AcademicPage() {
                   onChange={(e) => setSchCourseName(e.target.value)}
                 />
               </div>
-              <div className="space-y-1.5">
-                <label htmlFor="sch-code" className="text-sm font-medium">
-                  Kode
-                </label>
-                <Input
-                  id="sch-code"
-                  placeholder="Contoh: IF3021"
-                  value={schCourseCode}
-                  onChange={(e) => setSchCourseCode(e.target.value)}
-                />
-              </div>
+            
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">

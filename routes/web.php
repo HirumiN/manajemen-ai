@@ -16,6 +16,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('schedule/store-class', [App\Http\Controllers\AcademicController::class, 'storeClassSchedule']);
     Route::delete('schedule/destroy-class/{classSchedule}', [App\Http\Controllers\AcademicController::class, 'destroyClassSchedule']);
     Route::post('schedule/store-assignment', [App\Http\Controllers\AcademicController::class, 'storeAssignment']);
+    Route::patch('schedule/update-assignment/{assignment}', [App\Http\Controllers\AcademicController::class, 'updateAssignment']);
     Route::patch('schedule/toggle-assignment/{assignment}', [App\Http\Controllers\AcademicController::class, 'toggleAssignmentStatus']);
     Route::delete('schedule/destroy-assignment/{assignment}', [App\Http\Controllers\AcademicController::class, 'destroyAssignment']);
     Route::post('schedule/store-organization', [App\Http\Controllers\AcademicController::class, 'storeOrganization']);

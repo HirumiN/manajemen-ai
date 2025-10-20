@@ -14,6 +14,7 @@ class Assignment extends Model
         'name',
         'deadline',
         'status',
+        'type',
         'user_id',
     ];
 

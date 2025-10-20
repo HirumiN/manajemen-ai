@@ -6,11 +6,9 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        // ---------------- USERS ----------------
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -21,77 +19,84 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // ---------------- PASSWORD RESET ----------------
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
 
+        // ---------------- SESSIONS ----------------
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
+            $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
 
-       // Interests
+        // ---------------- INTERESTS ----------------
         Schema::create('interests', function (Blueprint $table) {
             $table->id();
             $table->string('name', 100);
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
 
-        // Hobbies
+        // ---------------- HOBBIES ----------------
         Schema::create('hobbies', function (Blueprint $table) {
             $table->id();
             $table->string('name', 100);
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
 
-        // Skills
+        // ---------------- SKILLS ----------------
         Schema::create('skills', function (Blueprint $table) {
             $table->id();
             $table->string('name', 100);
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
 
-        // Class Schedules
+        // ---------------- CLASS SCHEDULES ----------------
         Schema::create('class_schedules', function (Blueprint $table) {
             $table->id();
             $table->string('name', 100);
             $table->string('day', 20);
-            $table->string('time', 10);
+            $table->time('start_time');
+            $table->time('end_time');
             $table->string('lecturer', 100);
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('room', 50)->nullable();
+            $table->integer('credits')->nullable();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
 
-        // Student Organizations (UKM)
+        // ---------------- ASSIGNMENTS ----------------
+        Schema::create('assignments', function (Blueprint $table) {
+            $table->id();
+            $table->string('name', 150);
+            $table->date('deadline');
+            $table->string('status', 20)->default('pending');
+            $table->enum('type', ['akademik', 'non-akademik'])->default('akademik');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+
+            $table->timestamps();
+        });
+
+        // ---------------- ORGANIZATIONS ----------------
         Schema::create('organizations', function (Blueprint $table) {
             $table->id();
             $table->string('name', 100);
             $table->string('role');
             $table->text('description')->nullable();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
 
-        // Assignments
-        Schema::create('assignments', function (Blueprint $table) {
-            $table->id();
-            $table->string('name', 150);
-            $table->date('deadline');
-            $table->string('status', 20);
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->timestamps();
-        });
-
-        // Work Experience
+        // ---------------- WORK EXPERIENCES ----------------
         Schema::create('work_experiences', function (Blueprint $table) {
             $table->id();
             $table->string('position', 150);
@@ -100,12 +105,12 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->text('description')->nullable();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
 
-        // Education
-        Schema::create('education', function (Blueprint $table) {
+        // ---------------- EDUCATION ----------------
+        Schema::create('educations', function (Blueprint $table) {
             $table->id();
             $table->string('degree', 150)->nullable();
             $table->string('institution', 150);
@@ -114,27 +119,23 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->decimal('gpa', 3, 2)->nullable();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('education');
+        Schema::dropIfExists('educations');
         Schema::dropIfExists('work_experiences');
-        Schema::dropIfExists('todo_lists');
-        Schema::dropIfExists('assignments');
         Schema::dropIfExists('organizations');
+        Schema::dropIfExists('assignments');
         Schema::dropIfExists('class_schedules');
         Schema::dropIfExists('skills');
         Schema::dropIfExists('hobbies');
         Schema::dropIfExists('interests');
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('users');
     }
 };

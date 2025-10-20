@@ -13,11 +13,9 @@ class AcademicController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-
-        $classSchedules = ClassSchedule::where('user_id', $user->id)->get();
-        $assignments = Assignment::where('user_id', $user->id)->get();
-        $organizations = Organization::where('user_id', $user->id)->get();
+        $classSchedules = ClassSchedule::where('user_id', Auth::id())->get();
+        $assignments = Assignment::where('user_id', Auth::id())->get();
+        $organizations = Organization::where('user_id', Auth::id())->get();
 
         return Inertia::render('schedule', [
             'classSchedules' => $classSchedules,
@@ -31,15 +29,25 @@ class AcademicController extends Controller
         $request->validate([
             'name' => 'required|string|max:100',
             'day' => 'required|string|max:20',
-            'time' => 'required|string|max:10',
+            'time' => 'required|string',
             'lecturer' => 'required|string|max:100',
+            'room' => 'nullable|string|max:50',
+            'credits' => 'nullable|integer|min:1|max:6',
         ]);
+
+        // Parse time into start_time and end_time
+        $times = explode('-', $request->time);
+        $startTime = $times[0] ?? null;
+        $endTime = $times[1] ?? null;
 
         ClassSchedule::create([
             'name' => $request->name,
             'day' => $request->day,
-            'time' => $request->time,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
             'lecturer' => $request->lecturer,
+            'room' => $request->room,
+            'credits' => $request->credits,
             'user_id' => Auth::id(),
         ]);
 
@@ -55,11 +63,26 @@ class AcademicController extends Controller
         $request->validate([
             'name' => 'required|string|max:100',
             'day' => 'required|string|max:20',
-            'time' => 'required|string|max:10',
+            'time' => 'required|string',
             'lecturer' => 'required|string|max:100',
+            'room' => 'nullable|string|max:50',
+            'credits' => 'nullable|integer|min:1|max:6',
         ]);
 
-        $classSchedule->update($request->only(['name', 'day', 'time', 'lecturer']));
+        // Parse time into start_time and end_time
+        $times = explode('-', $request->time);
+        $startTime = $times[0] ?? null;
+        $endTime = $times[1] ?? null;
+
+        $classSchedule->update([
+            'name' => $request->name,
+            'day' => $request->day,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'lecturer' => $request->lecturer,
+            'room' => $request->room,
+            'credits' => $request->credits,
+        ]);
 
         return redirect()->back();
     }
@@ -80,13 +103,13 @@ class AcademicController extends Controller
         $request->validate([
             'name' => 'required|string|max:150',
             'deadline' => 'required|date',
-            'status' => 'required|string|max:20',
         ]);
 
         Assignment::create([
             'name' => $request->name,
             'deadline' => $request->deadline,
-            'status' => $request->status,
+            'status' => 'pending',
+            'type' => 'akademik',
             'user_id' => Auth::id(),
         ]);
 
@@ -102,10 +125,14 @@ class AcademicController extends Controller
         $request->validate([
             'name' => 'required|string|max:150',
             'deadline' => 'required|date',
-            'status' => 'required|string|max:20',
         ]);
 
-        $assignment->update($request->only(['name', 'deadline', 'status']));
+        $assignment->update([
+            'name' => $request->name,
+            'deadline' => $request->deadline,
+            'status' => 'pending',
+            'type' => 'akademik',
+        ]);
 
         return redirect()->back();
     }
@@ -137,12 +164,11 @@ class AcademicController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:100',
-            'description' => 'nullable|string',
         ]);
 
         Organization::create([
             'name' => $request->name,
-            'description' => $request->description,
+            'description' => '',
             'user_id' => Auth::id(),
         ]);
 
