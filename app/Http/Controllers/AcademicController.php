@@ -32,7 +32,7 @@ class AcademicController extends Controller
             'time' => 'required|string',
             'lecturer' => 'required|string|max:100',
             'room' => 'nullable|string|max:50',
-            'credits' => 'nullable|integer|min:1|max:6',
+            'credits' => 'nullable|integer|min:0|max:6',
         ]);
 
         // Parse time into start_time and end_time
@@ -168,6 +168,7 @@ class AcademicController extends Controller
 
         Organization::create([
             'name' => $request->name,
+            'role' => '',
             'description' => '',
             'user_id' => Auth::id(),
         ]);

@@ -90,7 +90,7 @@ return new class extends Migration
         Schema::create('organizations', function (Blueprint $table) {
             $table->id();
             $table->string('name', 100);
-            $table->string('role');
+            $table->string('role')->nullable();
             $table->text('description')->nullable();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();

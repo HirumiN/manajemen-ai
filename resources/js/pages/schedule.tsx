@@ -191,6 +191,10 @@ export default function AcademicPage() {
     };
 
     const handleAddSchedule = () => {
+        if (!schDay || !schCourseName || !schLecturer || !schStart || !schEnd) {
+            setSchError('Semua field wajib diisi');
+            return;
+        }
         setSavingSchedule(true);
         setSchError('');
         router.post('/schedule/store-class', {
@@ -198,6 +202,8 @@ export default function AcademicPage() {
             day: schDay,
             time: `${schStart}-${schEnd}`,
             lecturer: schLecturer,
+            room: schRoom,
+            credits: schCredits,
         }, {
             onSuccess: () => {
                 setSchCourseName('');
@@ -610,6 +616,7 @@ export default function AcademicPage() {
                   id="sch-day"
                   value={schDay}
                   onChange={(e) => setSchDay(e.target.value)}
+                  required
                   className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {days.map((d) => (
@@ -619,22 +626,18 @@ export default function AcademicPage() {
                   ))}
                 </select>
               </div>
-            
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label htmlFor="sch-name" className="text-sm font-medium">
-                  Nama Mata Kuliah
+                  Mata Kuliah
                 </label>
                 <Input
                   id="sch-name"
                   placeholder="Contoh: RPL"
                   value={schCourseName}
                   onChange={(e) => setSchCourseName(e.target.value)}
+                  required
                 />
               </div>
-            
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -647,6 +650,7 @@ export default function AcademicPage() {
                   placeholder="Nama dosen"
                   value={schLecturer}
                   onChange={(e) => setSchLecturer(e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-1.5">
@@ -667,13 +671,13 @@ export default function AcademicPage() {
                 <label htmlFor="sch-start" className="text-sm font-medium">
                   Mulai
                 </label>
-                <Input id="sch-start" type="time" value={schStart} onChange={(e) => setSchStart(e.target.value)} />
+                <Input id="sch-start" type="time" value={schStart} onChange={(e) => setSchStart(e.target.value)} required />
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="sch-end" className="text-sm font-medium">
                   Selesai
                 </label>
-                <Input id="sch-end" type="time" value={schEnd} onChange={(e) => setSchEnd(e.target.value)} />
+                <Input id="sch-end" type="time" value={schEnd} onChange={(e) => setSchEnd(e.target.value)} required />
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="sch-credits" className="text-sm font-medium">
@@ -682,7 +686,7 @@ export default function AcademicPage() {
                 <Input
                   id="sch-credits"
                   type="number"
-                  min={1}
+                  min={0}
                   max={6}
                   value={schCredits}
                   onChange={(e) => setSchCredits(Number(e.target.value))}
@@ -694,7 +698,7 @@ export default function AcademicPage() {
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setScheduleOpen(false)}>Batal</Button>
-            <Button onClick={handleAddSchedule} disabled={savingSchedule}>
+            <Button onClick={handleAddSchedule} disabled={savingSchedule || !schDay || !schCourseName || !schLecturer || !schStart || !schEnd}>
               {savingSchedule ? "Menyimpan..." : "Tambah Jadwal"}
             </Button>
           </DialogFooter>
