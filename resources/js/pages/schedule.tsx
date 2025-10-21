@@ -4,21 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -27,13 +17,11 @@ import {
     Calendar,
     CheckCircle2,
     Plus,
-    Trash2,
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { type BreadcrumbItem } from '@/types';
 import { schedule } from '@/routes';
-
 
 interface ClassSchedule {
     id: number;
@@ -56,6 +44,11 @@ interface Assignment {
 interface Organization {
     id: number;
     name: string;
+    type?: string;
+    position?: string;
+    startDate?: string;
+    endDate?: string;
+    current?: boolean;
     description: string;
 }
 
@@ -65,6 +58,12 @@ interface Day {
     key: string;
     label: string;
 }
+
+interface PageProps extends Record<string, unknown> {
+    classSchedules: ClassSchedule[];
+    assignments: Assignment[];
+    organizations: Organization[];
+}
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Akademik',
@@ -73,14 +72,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function AcademicPage() {
-    const { classSchedules, assignments, organizations } = usePage()
-        .props as any;
+    const { classSchedules, assignments, organizations } = usePage<PageProps>().props;
 
     // State for assignments
     const [createOpen, setCreateOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [title, setTitle] = useState('');
-    const [course, setCourse] = useState('');
     const [type, setType] = useState<AssignmentType>('akademik');
     const [dueDate, setDueDate] = useState('');
     const [description, setDescription] = useState('');
@@ -89,7 +86,6 @@ export default function AcademicPage() {
 
     // State for editing assignment
     const [editTitle, setEditTitle] = useState('');
-    const [editCourse, setEditCourse] = useState('');
     const [editType, setEditType] = useState<AssignmentType>('akademik');
     const [editDueDate, setEditDueDate] = useState('');
     const [editDescription, setEditDescription] = useState('');
@@ -99,9 +95,7 @@ export default function AcademicPage() {
     // State for schedule
     const [scheduleOpen, setScheduleOpen] = useState(false);
     const [schDay, setSchDay] = useState('');
-    const [schType, setSchType] = useState('');
     const [schCourseName, setSchCourseName] = useState('');
-    const [schCourseCode, setSchCourseCode] = useState('');
     const [schLecturer, setSchLecturer] = useState('');
     const [schRoom, setSchRoom] = useState('');
     const [schStart, setSchStart] = useState('');
@@ -141,14 +135,13 @@ export default function AcademicPage() {
         }, {
             onSuccess: () => {
                 setTitle('');
-                setCourse('');
                 setType('akademik');
                 setDueDate('');
                 setDescription('');
                 setCreateOpen(false);
                 setSubmitting(false);
             },
-            onError: (errors: any) => {
+            onError: () => {
                 setError('Terjadi kesalahan saat menambahkan todo');
                 setSubmitting(false);
             },
@@ -160,7 +153,6 @@ export default function AcademicPage() {
         if (assignment) {
             setEditId(id);
             setEditTitle(assignment.name);
-            setEditCourse('');
             setEditType('akademik');
             setEditDueDate(assignment.deadline);
             setEditDescription('');
@@ -208,8 +200,6 @@ export default function AcademicPage() {
             onSuccess: () => {
                 setSchCourseName('');
                 setSchDay('');
-                setSchType('');
-                setSchCourseCode('');
                 setSchLecturer('');
                 setSchRoom('');
                 setSchStart('');
@@ -218,7 +208,7 @@ export default function AcademicPage() {
                 setScheduleOpen(false);
                 setSavingSchedule(false);
             },
-            onError: (errors: any) => {
+            onError: () => {
                 setSchError('Terjadi kesalahan saat menambahkan jadwal');
                 setSavingSchedule(false);
             },
@@ -242,65 +232,14 @@ export default function AcademicPage() {
                 setOrgOpen(false);
                 setSavingOrg(false);
             },
-            onError: (errors: any) => {
+            onError: () => {
                 setOrgError('Terjadi kesalahan saat menambahkan organisasi');
                 setSavingOrg(false);
             },
         });
     };
 
-    const deleteClass = (id: number) => {
-        router.delete(`/schedule/destroy-class/${id}`);
-    };
 
-    const deleteAssignment = (id: number) => {
-        router.delete(`/schedule/destroy-assignment/${id}`);
-    };
-
-    const deleteOrganization = (id: number) => {
-        router.delete(`/schedule/destroy-organization/${id}`);
-    };
-
-    const toggleAssignmentStatus = (id: number) => {
-        router.patch(`/schedule/toggle-assignment/${id}`);
-    };
-
-    const getClassesByDay = (day: string) => {
-        return classSchedules.filter(
-            (cls: ClassSchedule) => cls.day.toLowerCase() === day.toLowerCase(),
-        );
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'completed':
-                return 'bg-green-100 text-green-800';
-            case 'in-progress':
-                return 'bg-blue-100 text-blue-800';
-            case 'pending':
-                return 'bg-gray-100 text-gray-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('id-ID', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
-    };
-
-    const getDaysUntilDue = (dueDate: string) => {
-        const today = new Date();
-        const due = new Date(dueDate);
-        const diffTime = due.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays;
-    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -441,7 +380,7 @@ export default function AcademicPage() {
               <p className="text-muted-foreground text-center py-8">Belum ada organisasi yang diikuti</p>
             ) : (
               <div className="grid gap-3 md:grid-cols-2">
-                {organizations.map((org: any) => (
+                {organizations.map((org: Organization) => (
                   <div key={org.id} className="p-3 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium">{org.name}</h4>
