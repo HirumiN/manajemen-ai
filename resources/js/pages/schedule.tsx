@@ -449,7 +449,7 @@ export default function AcademicPage() {
                     </div>
                     <p className="text-sm text-muted-foreground">{org.position}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(org.startDate).toLocaleDateString("id-ID", { year: "numeric", month: "long" })} -{" "}
+                      {org.startDate ? new Date(org.startDate).toLocaleDateString("id-ID", { year: "numeric", month: "long" }) : ""} -{" "}
                       {org.current
                         ? "Sekarang"
                         : org.endDate
