@@ -79,7 +79,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 150);
             $table->date('deadline');
-            $table->string('status', 20)->default('pending');
+            $table->string('status', 20)->default('in-progress');
             $table->enum('type', ['akademik', 'non-akademik'])->default('akademik');
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
 

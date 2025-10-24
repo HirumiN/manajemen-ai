@@ -8,6 +8,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
@@ -16,7 +22,10 @@ import {
     BookOpen,
     Calendar,
     CheckCircle2,
+    Edit,
+    MoreVertical,
     Plus,
+    Trash2,
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -39,6 +48,7 @@ interface Assignment {
     name: string;
     deadline: string;
     status: string;
+    description?: string;
 }
 
 interface Organization {
@@ -104,6 +114,19 @@ export default function AcademicPage() {
     const [schError, setSchError] = useState('');
     const [savingSchedule, setSavingSchedule] = useState(false);
 
+    // State for editing schedule
+    const [editScheduleOpen, setEditScheduleOpen] = useState(false);
+    const [editSchId, setEditSchId] = useState<number | null>(null);
+    const [editSchDay, setEditSchDay] = useState('');
+    const [editSchCourseName, setEditSchCourseName] = useState('');
+    const [editSchLecturer, setEditSchLecturer] = useState('');
+    const [editSchRoom, setEditSchRoom] = useState('');
+    const [editSchStart, setEditSchStart] = useState('');
+    const [editSchEnd, setEditSchEnd] = useState('');
+    const [editSchCredits, setEditSchCredits] = useState(0);
+    const [editSchError, setEditSchError] = useState('');
+    const [savingEditSchedule, setSavingEditSchedule] = useState(false);
+
     // State for organization
     const [orgOpen, setOrgOpen] = useState(false);
     const [orgName, setOrgName] = useState('');
@@ -132,6 +155,7 @@ export default function AcademicPage() {
             name: title,
             deadline: dueDate,
             status: 'pending',
+            description: description,
         }, {
             onSuccess: () => {
                 setTitle('');
@@ -155,7 +179,7 @@ export default function AcademicPage() {
             setEditTitle(assignment.name);
             setEditType('akademik');
             setEditDueDate(assignment.deadline);
-            setEditDescription('');
+            setEditDescription(assignment.description || '');
             setEditOpen(true);
         }
     };
@@ -167,6 +191,7 @@ export default function AcademicPage() {
             name: editTitle,
             deadline: editDueDate,
             status: 'pending',
+            description: editDescription,
         }, {
             onSuccess: () => {
                 setEditOpen(false);
@@ -179,7 +204,9 @@ export default function AcademicPage() {
     };
 
     const markDone = (id: number) => {
-        router.patch(`/schedule/toggle-assignment/${id}`);
+        router.patch(`/schedule/update-assignment/${id}`, {
+            status: 'done',
+        });
     };
 
     const handleAddSchedule = () => {
@@ -211,6 +238,47 @@ export default function AcademicPage() {
             onError: () => {
                 setSchError('Terjadi kesalahan saat menambahkan jadwal');
                 setSavingSchedule(false);
+            },
+        });
+    };
+
+    const openEditSchedule = (id: number) => {
+        const schedule = classSchedules.find((s: ClassSchedule) => s.id === id);
+        if (schedule) {
+            setEditSchId(id);
+            setEditSchDay(schedule.day);
+            setEditSchCourseName(schedule.name);
+            setEditSchLecturer(schedule.lecturer);
+            setEditSchRoom(schedule.room || '');
+            setEditSchStart(schedule.start_time);
+            setEditSchEnd(schedule.end_time);
+            setEditSchCredits(schedule.credits || 0);
+            setEditScheduleOpen(true);
+        }
+    };
+
+    const handleEditSchedule = () => {
+        if (!editSchId || !editSchDay || !editSchCourseName || !editSchLecturer || !editSchStart || !editSchEnd) {
+            setEditSchError('Semua field wajib diisi');
+            return;
+        }
+        setSavingEditSchedule(true);
+        setEditSchError('');
+        router.patch(`/schedule/update-class/${editSchId}`, {
+            name: editSchCourseName,
+            day: editSchDay,
+            time: `${editSchStart}-${editSchEnd}`,
+            lecturer: editSchLecturer,
+            room: editSchRoom,
+            credits: editSchCredits,
+        }, {
+            onSuccess: () => {
+                setEditScheduleOpen(false);
+                setSavingEditSchedule(false);
+            },
+            onError: () => {
+                setEditSchError('Terjadi kesalahan saat mengedit jadwal');
+                setSavingEditSchedule(false);
             },
         });
     };
@@ -247,7 +315,6 @@ export default function AcademicPage() {
             <div className="flex flex-1 flex-col gap-4 p-4">
 
 
-      {/* Row 1: Tugas Akademik + Jadwal Kuliah (Tabs: Hari Ini / Mingguan) */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Tugas Akademik */}
         <Card>
@@ -269,36 +336,43 @@ export default function AcademicPage() {
               <p className="text-muted-foreground text-center py-8">Belum ada todo akademik</p>
             ) : (
               assignments.map((assignment: Assignment) => (
-                <div key={assignment.id} className="p-3 border rounded-lg">
-                  <div className="mb-1 flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="font-medium text-sm">{assignment.name}</h4>
-                      <p className="text-xs text-muted-foreground mb-1">Todo</p>
-                      <p className="text-xs text-muted-foreground">
-                        Deadline: {new Date(assignment.deadline).toLocaleDateString("id-ID")}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEdit(assignment.id)}
-                        aria-label="Edit todo"
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => markDone(assignment.id)}
-                        aria-label="Done"
-                      >
-                        <CheckCircle2 className="h-4 w-4 mr-1" />
-                        Selesai
-                      </Button>
+                  <div key={assignment.id} className="p-3 border rounded-lg">
+                    <div className="mb-1 flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm">{assignment.name}</h4>
+                        <p className="text-xs text-muted-foreground mb-1">{assignment.description || "Tidak ada deskripsi"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Deadline: {new Date(assignment.deadline).toLocaleDateString("id-ID")}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${assignment.status === 'done' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {assignment.status === 'done' ? 'Selesai' : 'Belum'}
+                        </span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" aria-label="More options">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openEdit(assignment.id)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => markDone(assignment.id)}>
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                Selesai
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => router.delete(`/schedule/destroy-assignment/${assignment.id}`)}>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Hapus
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   </div>
-                </div>
               ))
             )}
           </CardContent>
@@ -349,6 +423,14 @@ export default function AcademicPage() {
                               </p>
                             </div>
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditSchedule(course.id)}
+                            aria-label="Edit schedule"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -384,7 +466,7 @@ export default function AcademicPage() {
                   <div key={org.id} className="p-3 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium">{org.name}</h4>
-                      <Badge variant="outline">{String(org.type || "").toUpperCase()}</Badge>
+                      <Badge variant="default">{String(org.type || "").toUpperCase()}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{org.position}</p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -639,6 +721,111 @@ export default function AcademicPage() {
             <Button variant="outline" onClick={() => setScheduleOpen(false)}>Batal</Button>
             <Button onClick={handleAddSchedule} disabled={savingSchedule || !schDay || !schCourseName || !schLecturer || !schStart || !schEnd}>
               {savingSchedule ? "Menyimpan..." : "Tambah Jadwal"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Edit Jadwal Kuliah */}
+      <Dialog open={editScheduleOpen} onOpenChange={setEditScheduleOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Jadwal Kuliah</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="edit-sch-day" className="text-sm font-medium">
+                  Hari
+                </label>
+                <select
+                  id="edit-sch-day"
+                  value={editSchDay}
+                  onChange={(e) => setEditSchDay(e.target.value)}
+                  required
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {days.map((d) => (
+                    <option key={d.key} value={d.key}>
+                      {d.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="edit-sch-name" className="text-sm font-medium">
+                  Mata Kuliah
+                </label>
+                <Input
+                  id="edit-sch-name"
+                  placeholder="Contoh: RPL"
+                  value={editSchCourseName}
+                  onChange={(e) => setEditSchCourseName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="edit-sch-lecturer" className="text-sm font-medium">
+                  Dosen
+                </label>
+                <Input
+                  id="edit-sch-lecturer"
+                  placeholder="Nama dosen"
+                  value={editSchLecturer}
+                  onChange={(e) => setEditSchLecturer(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="edit-sch-room" className="text-sm font-medium">
+                  Ruang
+                </label>
+                <Input
+                  id="edit-sch-room"
+                  placeholder="Contoh: Gd A-203"
+                  value={editSchRoom}
+                  onChange={(e) => setEditSchRoom(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <label htmlFor="edit-sch-start" className="text-sm font-medium">
+                  Mulai
+                </label>
+                <Input id="edit-sch-start" type="time" value={editSchStart} onChange={(e) => setEditSchStart(e.target.value)} required />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="edit-sch-end" className="text-sm font-medium">
+                  Selesai
+                </label>
+                <Input id="edit-sch-end" type="time" value={editSchEnd} onChange={(e) => setEditSchEnd(e.target.value)} required />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="edit-sch-credits" className="text-sm font-medium">
+                  SKS
+                </label>
+                <Input
+                  id="edit-sch-credits"
+                  type="number"
+                  min={0}
+                  max={6}
+                  value={editSchCredits}
+                  onChange={(e) => setEditSchCredits(Number(e.target.value))}
+                />
+              </div>
+            </div>
+
+            {editSchError && <p className="text-sm text-red-600">{editSchError}</p>}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setEditScheduleOpen(false)}>Batal</Button>
+            <Button onClick={handleEditSchedule} disabled={savingEditSchedule || !editSchDay || !editSchCourseName || !editSchLecturer || !editSchStart || !editSchEnd}>
+              {savingEditSchedule ? "Menyimpan..." : "Simpan Perubahan"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -14,6 +14,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('schedule', [App\Http\Controllers\AcademicController::class, 'index'])->name('schedule');
     Route::post('schedule/store-class', [App\Http\Controllers\AcademicController::class, 'storeClassSchedule']);
+    Route::patch('schedule/update-class/{classSchedule}', [App\Http\Controllers\AcademicController::class, 'updateClassSchedule']);
     Route::delete('schedule/destroy-class/{classSchedule}', [App\Http\Controllers\AcademicController::class, 'destroyClassSchedule']);
     Route::post('schedule/store-assignment', [App\Http\Controllers\AcademicController::class, 'storeAssignment']);
     Route::patch('schedule/update-assignment/{assignment}', [App\Http\Controllers\AcademicController::class, 'updateAssignment']);

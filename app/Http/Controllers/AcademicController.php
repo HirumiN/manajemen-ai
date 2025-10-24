@@ -103,6 +103,7 @@ class AcademicController extends Controller
         $request->validate([
             'name' => 'required|string|max:150',
             'deadline' => 'required|date',
+            'description' => 'nullable|string',
         ]);
 
         Assignment::create([
@@ -110,6 +111,7 @@ class AcademicController extends Controller
             'deadline' => $request->deadline,
             'status' => 'pending',
             'type' => 'akademik',
+            'description' => $request->description,
             'user_id' => Auth::id(),
         ]);
 
@@ -123,15 +125,18 @@ class AcademicController extends Controller
         }
 
         $request->validate([
-            'name' => 'required|string|max:150',
-            'deadline' => 'required|date',
+            'name' => 'nullable|string|max:150',
+            'deadline' => 'nullable|date',
+            'status' => 'nullable|string|in:pending,in-progress,done',
+            'description' => 'nullable|string',
         ]);
 
         $assignment->update([
-            'name' => $request->name,
-            'deadline' => $request->deadline,
-            'status' => 'pending',
+            'name' => $request->name ?: $assignment->name,
+            'deadline' => $request->deadline ?: $assignment->deadline,
+            'status' => $request->status ?? $assignment->status,
             'type' => 'akademik',
+            'description' => $request->description,
         ]);
 
         return redirect()->back();
