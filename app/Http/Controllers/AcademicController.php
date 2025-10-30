@@ -169,12 +169,14 @@ class AcademicController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:100',
+            'position' => 'nullable|string|max:100',
+            'description' => 'nullable|string',
         ]);
 
         Organization::create([
             'name' => $request->name,
-            'role' => '',
-            'description' => '',
+            'position' => $request->position,
+            'description' => $request->description,
             'user_id' => Auth::id(),
         ]);
 
@@ -189,10 +191,11 @@ class AcademicController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:100',
+            'position' => 'nullable|string|max:100',
             'description' => 'nullable|string',
         ]);
 
-        $organization->update($request->only(['name', 'description']));
+        $organization->update($request->only(['name', 'position', 'description']));
 
         return redirect()->back();
     }

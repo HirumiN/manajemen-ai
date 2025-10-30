@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { type BreadcrumbItem } from '@/types';
-import { schedule } from '@/routes';
+import { dashboard } from '@/routes';
 
 interface ClassSchedule {
     id: number;
@@ -77,7 +77,7 @@ interface PageProps extends Record<string, unknown> {
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Akademik',
-        href: schedule().url,
+        href: dashboard().url,
     },
 ];
 
@@ -130,11 +130,8 @@ export default function AcademicPage() {
     // State for organization
     const [orgOpen, setOrgOpen] = useState(false);
     const [orgName, setOrgName] = useState('');
-    const [orgType, setOrgType] = useState('');
     const [orgPosition, setOrgPosition] = useState('');
-    const [orgStart, setOrgStart] = useState('');
-    const [orgEnd, setOrgEnd] = useState('');
-    const [orgCurrent, setOrgCurrent] = useState(false);
+    const [orgDescription, setOrgDescription] = useState('');
     const [orgError, setOrgError] = useState('');
     const [savingOrg, setSavingOrg] = useState(false);
 
@@ -288,15 +285,13 @@ export default function AcademicPage() {
         setOrgError('');
         router.post('/schedule/store-organization', {
             name: orgName,
-            description: '',
+            position: orgPosition,
+            description: orgDescription,
         }, {
             onSuccess: () => {
                 setOrgName('');
-                setOrgType('');
                 setOrgPosition('');
-                setOrgStart('');
-                setOrgEnd('');
-                setOrgCurrent(false);
+                setOrgDescription('');
                 setOrgOpen(false);
                 setSavingOrg(false);
             },
@@ -311,8 +306,14 @@ export default function AcademicPage() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Akademik" />
+            <Head title="Dashboard" />
             <div className="flex flex-1 flex-col gap-4 p-4">
+                <div className="mb-6">
+                    <h1 className="text-3xl font-bold tracking-tight">Selamat datang, {(usePage().props.auth as any).user.name}!</h1>
+                    <p className="text-muted-foreground mt-2">
+                        Kelola jadwal kuliah, tugas akademik, dan organisasi Anda dengan mudah di satu tempat.
+                    </p>
+                </div>
 
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -466,17 +467,9 @@ export default function AcademicPage() {
                   <div key={org.id} className="p-3 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium">{org.name}</h4>
-                      <Badge variant="default">{String(org.type || "").toUpperCase()}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{org.position}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {org.startDate ? new Date(org.startDate).toLocaleDateString("id-ID", { year: "numeric", month: "long" }) : ""} -{" "}
-                      {org.current
-                        ? "Sekarang"
-                        : org.endDate
-                          ? new Date(org.endDate).toLocaleDateString("id-ID", { year: "numeric", month: "long" })
-                          : ""}
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">{org.description}</p>
                   </div>
                 ))}
               </div>
@@ -851,66 +844,29 @@ export default function AcademicPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label htmlFor="org-type" className="text-sm font-medium">
-                  Tipe
+                <label htmlFor="org-position" className="text-sm font-medium">
+                  Jabatan
                 </label>
-                <select
-                  id="org-type"
-                  value={orgType}
-                  onChange={(e) => setOrgType(e.target.value)}
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="komunitas">Komunitas</option>
-                  <option value="organisasi">Organisasi</option>
-                  <option value="ukm">UKM</option>
-                  <option value="hmj">HMJ</option>
-                </select>
+                <Input
+                  id="org-position"
+                  placeholder="Contoh: Core Team"
+                  value={orgPosition}
+                  onChange={(e) => setOrgPosition(e.target.value)}
+                />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="org-position" className="text-sm font-medium">
-                Jabatan
+              <label htmlFor="org-description" className="text-sm font-medium">
+                Deskripsi (opsional)
               </label>
-              <Input
-                id="org-position"
-                placeholder="Contoh: Core Team"
-                value={orgPosition}
-                onChange={(e) => setOrgPosition(e.target.value)}
+              <Textarea
+                id="org-description"
+                placeholder="Deskripsi organisasi..."
+                value={orgDescription}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setOrgDescription(e.target.value)}
+                rows={3}
               />
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <label htmlFor="org-start" className="text-sm font-medium">
-                  Mulai
-                </label>
-                <Input id="org-start" type="date" value={orgStart} onChange={(e) => setOrgStart(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="org-end" className="text-sm font-medium">
-                    Selesai
-                  </label>
-                  <label className="text-xs flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={orgCurrent}
-                      onChange={(e) => setOrgCurrent(e.target.checked)}
-                      className="h-4 w-4"
-                      aria-label="Masih aktif"
-                    />
-                    Saat ini
-                  </label>
-                </div>
-                <Input
-                  id="org-end"
-                  type="date"
-                  disabled={orgCurrent}
-                  value={orgEnd}
-                  onChange={(e) => setOrgEnd(e.target.value)}
-                />
-              </div>
             </div>
 
             {orgError && <p className="text-sm text-red-600">{orgError}</p>}
