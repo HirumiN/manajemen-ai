@@ -21,6 +21,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
         <AuthLayout
             title="Log in to your account"
             description="Enter your email and password below to access AI-powered academic management"
+            className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
         >
             <Head title="Log in" />
 

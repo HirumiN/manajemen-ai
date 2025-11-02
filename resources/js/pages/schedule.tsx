@@ -135,6 +135,15 @@ export default function AcademicPage() {
     const [orgError, setOrgError] = useState('');
     const [savingOrg, setSavingOrg] = useState(false);
 
+    // State for editing organization
+    const [editOrgOpen, setEditOrgOpen] = useState(false);
+    const [editOrgId, setEditOrgId] = useState<number | null>(null);
+    const [editOrgName, setEditOrgName] = useState('');
+    const [editOrgPosition, setEditOrgPosition] = useState('');
+    const [editOrgDescription, setEditOrgDescription] = useState('');
+    const [editOrgError, setEditOrgError] = useState('');
+    const [savingEditOrg, setSavingEditOrg] = useState(false);
+
     const days: Day[] = [
         { key: 'senin', label: 'Senin' },
         { key: 'selasa', label: 'Selasa' },
@@ -302,6 +311,37 @@ export default function AcademicPage() {
         });
     };
 
+    const openEditOrg = (id: number) => {
+        const org = organizations.find((o: Organization) => o.id === id);
+        if (org) {
+            setEditOrgId(id);
+            setEditOrgName(org.name);
+            setEditOrgPosition(org.position || '');
+            setEditOrgDescription(org.description);
+            setEditOrgOpen(true);
+        }
+    };
+
+    const handleEditOrg = () => {
+        if (!editOrgId) return;
+        setSavingEditOrg(true);
+        setEditOrgError('');
+        router.patch(`/schedule/update-organization/${editOrgId}`, {
+            name: editOrgName,
+            position: editOrgPosition,
+            description: editOrgDescription,
+        }, {
+            onSuccess: () => {
+                setEditOrgOpen(false);
+                setSavingEditOrg(false);
+            },
+            onError: () => {
+                setEditOrgError('Terjadi kesalahan saat mengedit organisasi');
+                setSavingEditOrg(false);
+            },
+        });
+    };
+
 
 
     return (
@@ -424,14 +464,23 @@ export default function AcademicPage() {
                               </p>
                             </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditSchedule(course.id)}
-                            aria-label="Edit schedule"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" aria-label="More options">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openEditSchedule(course.id)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => router.delete(`/schedule/destroy-class/${course.id}`)}>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Hapus
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       ))}
                     </div>
@@ -467,6 +516,23 @@ export default function AcademicPage() {
                   <div key={org.id} className="p-3 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium">{org.name}</h4>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" aria-label="More options">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditOrg(org.id)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.delete(`/schedule/destroy-organization/${org.id}`)}>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Hapus
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                     <p className="text-sm text-muted-foreground">{org.position}</p>
                     <p className="text-xs text-muted-foreground mt-1">{org.description}</p>
@@ -875,6 +941,62 @@ export default function AcademicPage() {
             <Button variant="outline" onClick={() => setOrgOpen(false)}>Batal</Button>
             <Button onClick={handleAddOrg} disabled={savingOrg}>
               {savingOrg ? "Menyimpan..." : "Tambah Organisasi"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Edit Organisasi */}
+      <Dialog open={editOrgOpen} onOpenChange={setEditOrgOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Organisasi</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label htmlFor="edit-org-name" className="text-sm font-medium">
+                  Nama Organisasi
+                </label>
+                <Input
+                  id="edit-org-name"
+                  placeholder="Contoh: GDSC"
+                  value={editOrgName}
+                  onChange={(e) => setEditOrgName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="edit-org-position" className="text-sm font-medium">
+                  Jabatan
+                </label>
+                <Input
+                  id="edit-org-position"
+                  placeholder="Contoh: Core Team"
+                  value={editOrgPosition}
+                  onChange={(e) => setEditOrgPosition(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="edit-org-description" className="text-sm font-medium">
+                Deskripsi (opsional)
+              </label>
+              <Textarea
+                id="edit-org-description"
+                placeholder="Deskripsi organisasi..."
+                value={editOrgDescription}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditOrgDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            {editOrgError && <p className="text-sm text-red-600">{editOrgError}</p>}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setEditOrgOpen(false)}>Batal</Button>
+            <Button onClick={handleEditOrg} disabled={savingEditOrg || !editOrgId}>
+              {savingEditOrg ? "Menyimpan..." : "Simpan Perubahan"}
             </Button>
           </DialogFooter>
         </DialogContent>
