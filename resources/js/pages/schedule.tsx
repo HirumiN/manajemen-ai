@@ -759,7 +759,7 @@ export default function AcademicPage() {
                 </label>
                 <Input id="sch-end" type="time" value={schEnd} onChange={(e) => setSchEnd(e.target.value)} required />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5">t', [App\Http
                 <label htmlFor="sch-credits" className="text-sm font-medium">
                   SKS
                 </label>
