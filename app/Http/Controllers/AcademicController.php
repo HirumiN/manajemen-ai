@@ -210,4 +210,9 @@ class AcademicController extends Controller
 
         return redirect()->back();
     }
+
+    public function chat()
+    {
+        return Inertia::render('chat');
+    }
 }

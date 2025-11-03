@@ -11,6 +11,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [App\Http\Controllers\AcademicController::class, 'index'])->name('dashboard');
 
     Route::get('schedule', [App\Http\Controllers\AcademicController::class, 'index'])->name('schedule');
+
+    Route::get('chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat');
     Route::post('schedule/store-class', [App\Http\Controllers\AcademicController::class, 'storeClassSchedule']);
     Route::patch('schedule/update-class/{classSchedule}', [App\Http\Controllers\AcademicController::class, 'updateClassSchedule']);
     Route::delete('schedule/destroy-class/{classSchedule}', [App\Http\Controllers\AcademicController::class, 'destroyClassSchedule']);
