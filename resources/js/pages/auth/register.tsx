@@ -14,7 +14,7 @@ export default function Register() {
     return (
         <AuthLayout
             title="Create an account"
-            description="Join our AI-powered academic management platform"
+            description="Join Manajemen AI platform"
             className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
         >
             <Head title="Register" />

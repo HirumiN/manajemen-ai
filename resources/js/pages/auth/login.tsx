@@ -19,8 +19,8 @@ interface LoginProps {
 export default function Login({ status, canResetPassword }: LoginProps) {
     return (
         <AuthLayout
-            title="Log in to your account"
-            description="Enter your email and password below to access AI-powered academic management"
+            title="Log in to Manajemen AI"
+            description="Enter your email and password below to access Manajemen AI"
             className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
         >
             <Head title="Log in" />
