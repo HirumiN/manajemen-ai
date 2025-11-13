@@ -347,8 +347,8 @@ export default function AcademicPage() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
-            <div className="flex flex-1 flex-col gap-4 p-4">
-                <div className="mb-2">
+            <div className="flex flex-1 flex-col p-4">
+                <div className="mb-4">
                     <h1 className="text-5xl font-bold tracking-tight">Selamat datang, {(usePage().props.auth as any).user.name}!</h1>
                     <p className="text-xl text-muted-foreground mt-2">
                         Kelola jadwal kuliah, tugas akademik, dan organisasi Anda dengan mudah di satu tempat.
