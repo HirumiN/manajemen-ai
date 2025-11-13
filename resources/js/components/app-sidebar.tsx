@@ -46,7 +46,9 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <div className="scale-110">
+                    <NavMain items={mainNavItems} />
+                </div>
             </SidebarContent>
 
             <SidebarFooter>

@@ -1,11 +1,18 @@
-# Update Application Identity to "Manajemen AI"
+# TODO: Enlarge Chat Page Content and Make Colors More Contrasting
 
-## Tasks
-- [x] Update login page title and description
-- [x] Update register page description
-- [x] Update welcome page title
+- [x] Enlarge title font size and icon size
+- [x] Enlarge message text, timestamps, and padding
+- [x] Adjust max-width of messages for better visibility
+- [x] Change user message colors to bolder blue with white text
+- [x] Change AI message colors to darker gray with white text
+- [x] Add font-bold to message text and titles
+- [x] Update button and input styling for contrast
+- [x] Test the changes by running the app
 
-## Files to Edit
-- resources/js/pages/auth/login.tsx
-- resources/js/pages/auth/register.tsx
-- resources/js/pages/welcome.tsx
+# TODO: Enlarge Dashboard and Sidebar Content
+
+- [x] Enlarge dashboard title and description
+- [x] Enlarge card titles, descriptions, and content text
+- [x] Enlarge sidebar navigation items and logo
+- [x] Increase padding and spacing in dashboard cards
+- [ ] Test the changes by running the app

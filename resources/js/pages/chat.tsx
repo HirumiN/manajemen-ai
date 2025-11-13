@@ -72,11 +72,11 @@ export default function ChatPage() {
             <Head title="Chat dengan AI" />
             <div className="flex flex-1 flex-col gap-4 p-4">
                 <div className="mb-6">
-                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-                        <MessageCircle className="h-8 w-8" />
+                    <h1 className="text-4xl font-bold tracking-tight flex items-center gap-2">
+                        <MessageCircle className="h-10 w-10" />
                         Chat dengan AI
                     </h1>
-                    <p className="text-muted-foreground mt-2">
+                    <p className="text-muted-foreground mt-2 text-lg">
                         Tanyakan apa saja kepada asisten AI Anda.
                     </p>
                 </div>
@@ -89,7 +89,7 @@ export default function ChatPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1 flex flex-col p-0">
-                        <div className="flex-1 p-4 overflow-y-auto max-h-96">
+                        <div className="flex-1 p-4 overflow-y-auto">
                             <div className="space-y-4">
                                 {messages.map((message) => (
                                     <div
@@ -99,14 +99,14 @@ export default function ChatPage() {
                                         }`}
                                     >
                                         <div
-                                            className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                                            className={`max-w-[80%] rounded-lg px-6 py-3 ${
                                                 message.sender === 'user'
-                                                    ? 'bg-primary text-primary-foreground'
-                                                    : 'bg-muted'
+                                                    ? 'bg-blue-600 text-white font-bold'
+                                                    : 'bg-gray-700 text-white font-bold'
                                             }`}
                                         >
-                                            <p className="text-sm">{message.text}</p>
-                                            <p className="text-xs opacity-70 mt-1">
+                                            <p className="text-base">{message.text}</p>
+                                            <p className="text-sm opacity-80 mt-1">
                                                 {message.timestamp.toLocaleTimeString('id-ID', {
                                                     hour: '2-digit',
                                                     minute: '2-digit',
@@ -117,21 +117,21 @@ export default function ChatPage() {
                                 ))}
                                 {isLoading && (
                                     <div className="flex justify-start">
-                                        <div className="bg-muted rounded-lg px-4 py-2 max-w-[70%]">
+                                        <div className="bg-gray-700 text-white rounded-lg px-6 py-3 max-w-[80%]">
                                             <div className="flex items-center gap-2">
                                                 <div className="flex gap-1">
-                                                    <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
-                                                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                                                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                                    <div className="w-3 h-3 bg-current rounded-full animate-bounce"></div>
+                                                    <div className="w-3 h-3 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                                    <div className="w-3 h-3 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                                                 </div>
-                                                <span className="text-sm">AI sedang mengetik...</span>
+                                                <span className="text-base font-bold">AI sedang mengetik...</span>
                                             </div>
                                         </div>
                                     </div>
                                 )}
                             </div>
                         </div>
-                        <div className="border-t p-4">
+                        <div className="border-t p-6">
                             <div className="flex gap-2">
                                 <Input
                                     placeholder="Ketik pesan Anda..."
@@ -139,14 +139,15 @@ export default function ChatPage() {
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyPress={handleKeyPress}
                                     disabled={isLoading}
-                                    className="flex-1"
+                                    className="flex-1 text-lg py-3"
                                 />
                                 <Button
                                     onClick={handleSendMessage}
                                     disabled={!input.trim() || isLoading}
-                                    size="icon"
+                                    size="lg"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
                                 >
-                                    <Send className="h-4 w-4" />
+                                    <Send className="h-5 w-5" />
                                 </Button>
                             </div>
                         </div>
