@@ -37,7 +37,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={dashboard()} prefetch className="text-lg">
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -46,9 +46,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <div className="scale-110">
-                    <NavMain items={mainNavItems} />
-                </div>
+                <NavMain items={mainNavItems} />
             </SidebarContent>
 
             <SidebarFooter>

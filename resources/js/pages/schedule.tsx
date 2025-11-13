@@ -348,9 +348,9 @@ export default function AcademicPage() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="flex flex-1 flex-col gap-4 p-4">
-                <div className="mb-6">
-                    <h1 className="text-4xl font-bold tracking-tight">Selamat datang, {(usePage().props.auth as any).user.name}!</h1>
-                    <p className="text-lg text-muted-foreground mt-2">
+                <div className="mb-2">
+                    <h1 className="text-5xl font-bold tracking-tight">Selamat datang, {(usePage().props.auth as any).user.name}!</h1>
+                    <p className="text-xl text-muted-foreground mt-2">
                         Kelola jadwal kuliah, tugas akademik, dan organisasi Anda dengan mudah di satu tempat.
                     </p>
                 </div>
@@ -361,33 +361,33 @@ export default function AcademicPage() {
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-2">
             <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <BookOpen className="h-6 w-6" />
+              <CardTitle className="flex items-center gap-2 text-xl font-bold">
+                <BookOpen className="h-8 w-8" />
                 Todo Akademik
               </CardTitle>
-              <CardDescription className="text-base">Kelola dan tambahkan todo kuliah Anda</CardDescription>
+              <CardDescription className="text-lg">Kelola dan tambahkan todo kuliah Anda</CardDescription>
             </div>
-            <Button size="sm" onClick={() => setCreateOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" />
+            <Button size="lg" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-5 w-5 mr-2" />
               Todo
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             {assignments.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8 text-base">Belum ada todo akademik</p>
+              <p className="text-muted-foreground text-center py-8 text-base font-bold">Belum ada todo akademik</p>
             ) : (
               assignments.map((assignment: Assignment) => (
-                  <div key={assignment.id} className="p-4 border rounded-lg">
+                  <div key={assignment.id} className="p-4 border rounded-lg bg-muted">
                     <div className="mb-1 flex items-start justify-between gap-2">
                       <div className="flex-1">
-                        <h4 className="font-medium text-base">{assignment.name}</h4>
-                        <p className="text-sm text-muted-foreground mb-1">{assignment.description || "Tidak ada deskripsi"}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <h4 className="font-bold text-lg">{assignment.name}</h4>
+                        <p className="text-base text-muted-foreground mb-1">{assignment.description || "Tidak ada deskripsi"}</p>
+                        <p className="text-base text-muted-foreground">
                           Deadline: {new Date(assignment.deadline).toLocaleDateString("id-ID")}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`px-3 py-1 rounded text-sm font-medium ${assignment.status === 'done' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        <span className={`px-3 py-1 rounded text-sm font-bold ${assignment.status === 'done' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
                           {assignment.status === 'done' ? 'Selesai' : 'Belum'}
                         </span>
                         <DropdownMenu>
@@ -423,14 +423,14 @@ export default function AcademicPage() {
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-2">
             <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Calendar className="h-6 w-6" />
+              <CardTitle className="flex items-center gap-2 text-xl font-bold">
+                <Calendar className="h-8 w-8" />
                 Jadwal Kuliah
               </CardTitle>
-              <CardDescription className="text-base">Jadwal kuliah mingguan</CardDescription>
+              <CardDescription className="text-lg">Jadwal kuliah mingguan</CardDescription>
             </div>
-            <Button size="sm" onClick={() => setScheduleOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" />
+            <Button size="lg" onClick={() => setScheduleOpen(true)}>
+              <Plus className="h-5 w-5 mr-2" />
               Jadwal
             </Button>
           </CardHeader>
@@ -441,25 +441,25 @@ export default function AcademicPage() {
                 return courses.length > 0 ? (
                   <div
                     key={day.key}
-                    className="rounded-lg border p-3"
+                    className="rounded-lg border p-4 bg-muted"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
-                        <span className="font-medium text-base">{day.label}</span>
+                        <span className="font-bold text-lg">{day.label}</span>
                       </div>
-                      <span className="text-sm text-muted-foreground">{courses.length} mata kuliah</span>
+                      <span className="text-base text-muted-foreground font-bold">{courses.length} mata kuliah</span>
                     </div>
                     <div className="space-y-2">
                       {courses.map((course: ClassSchedule) => (
-                        <div key={course.id} className="flex items-center justify-between rounded-md border p-4">
+                        <div key={course.id} className="flex items-center justify-between rounded-md border p-4 bg-background">
                           <div className="flex items-center gap-3">
                             <div>
-                              <h4 className="font-medium text-base">{course.name}</h4>
-                              <p className="text-base text-muted-foreground">
+                              <h4 className="font-bold text-lg">{course.name}</h4>
+                              <p className="text-lg text-muted-foreground">
                                 {course.lecturer}
                               </p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-base text-muted-foreground">
                                 {course.start_time} - {course.end_time}
                               </p>
                             </div>
@@ -497,25 +497,25 @@ export default function AcademicPage() {
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-2">
             <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Users className="h-6 w-6" />
+              <CardTitle className="flex items-center gap-2 text-xl font-bold">
+                <Users className="h-8 w-8" />
                 Organisasi yang Diikuti
               </CardTitle>
             </div>
-            <Button size="sm" onClick={() => setOrgOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" />
+            <Button size="lg" onClick={() => setOrgOpen(true)}>
+              <Plus className="h-5 w-5 mr-2" />
               Organisasi
             </Button>
           </CardHeader>
           <CardContent>
             {organizations.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8 text-base">Belum ada organisasi yang diikuti</p>
+              <p className="text-muted-foreground text-center py-8 text-base font-bold">Belum ada organisasi yang diikuti</p>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
                 {organizations.map((org: Organization) => (
-                  <div key={org.id} className="p-4 border rounded-lg">
+                  <div key={org.id} className="p-4 border rounded-lg bg-muted">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-base">{org.name}</h4>
+                      <h4 className="font-bold text-lg">{org.name}</h4>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" aria-label="More options">
@@ -534,8 +534,8 @@ export default function AcademicPage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                    <p className="text-base text-muted-foreground">{org.position}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{org.description}</p>
+                    <p className="text-lg text-muted-foreground">{org.position}</p>
+                    <p className="text-base text-muted-foreground mt-1">{org.description}</p>
                   </div>
                 ))}
               </div>

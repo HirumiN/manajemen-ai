@@ -101,8 +101,8 @@ export default function ChatPage() {
                                         <div
                                             className={`max-w-[80%] rounded-lg px-6 py-3 ${
                                                 message.sender === 'user'
-                                                    ? 'bg-blue-600 text-white font-bold'
-                                                    : 'bg-gray-700 text-white font-bold'
+                                                    ? 'bg-primary text-primary-foreground font-bold'
+                                                    : 'bg-muted text-muted-foreground font-bold'
                                             }`}
                                         >
                                             <p className="text-base">{message.text}</p>
@@ -117,7 +117,7 @@ export default function ChatPage() {
                                 ))}
                                 {isLoading && (
                                     <div className="flex justify-start">
-                                        <div className="bg-gray-700 text-white rounded-lg px-6 py-3 max-w-[80%]">
+                                        <div className="bg-muted text-muted-foreground rounded-lg px-6 py-3 max-w-[80%]">
                                             <div className="flex items-center gap-2">
                                                 <div className="flex gap-1">
                                                     <div className="w-3 h-3 bg-current rounded-full animate-bounce"></div>
@@ -145,7 +145,6 @@ export default function ChatPage() {
                                     onClick={handleSendMessage}
                                     disabled={!input.trim() || isLoading}
                                     size="lg"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
                                 >
                                     <Send className="h-5 w-5" />
                                 </Button>
