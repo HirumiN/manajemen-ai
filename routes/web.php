@@ -1,7 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ChatController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -12,10 +13,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('schedule', [App\Http\Controllers\AcademicController::class, 'index'])->name('schedule');
 
-    Route::get('chat', [App\Http\Controllers\ChatController::class, 'index'])->name('chat');
+    // 1. Tampilkan Halaman
+Route::get('/chat', [ChatController::class, 'index'])->name('chat');
+    
+    // 2. Kirim Pesan (Endpoint untuk Axios)
     Route::post('schedule/store-class', [App\Http\Controllers\AcademicController::class, 'storeClassSchedule']);
     Route::patch('schedule/update-class/{classSchedule}', [App\Http\Controllers\AcademicController::class, 'updateClassSchedule']);
     Route::delete('schedule/destroy-class/{classSchedule}', [App\Http\Controllers\AcademicController::class, 'destroyClassSchedule']);
+    Route::post('schedule/store-semester', [App\Http\Controllers\AcademicController::class, 'storeSemester']);
+    Route::patch('schedule/update-semester/{semester}', [App\Http\Controllers\AcademicController::class, 'updateSemester']);
+    Route::delete('schedule/destroy-semester/{semester}', [App\Http\Controllers\AcademicController::class, 'destroySemester']);
     Route::post('schedule/store-assignment', [App\Http\Controllers\AcademicController::class, 'storeAssignment']);
     Route::patch('schedule/update-assignment/{assignment}', [App\Http\Controllers\AcademicController::class, 'updateAssignment']);
     Route::patch('schedule/toggle-assignment/{assignment}', [App\Http\Controllers\AcademicController::class, 'toggleAssignmentStatus']);

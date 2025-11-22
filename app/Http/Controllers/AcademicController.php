@@ -5,212 +5,252 @@ namespace App\Http\Controllers;
 use App\Models\Assignment;
 use App\Models\ClassSchedule;
 use App\Models\Organization;
+use App\Models\Semester;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class AcademicController extends Controller
 {
-    public function index()
-    {
-        $classSchedules = ClassSchedule::where('user_id', Auth::id())->get();
-        $assignments = Assignment::where('user_id', Auth::id())->get();
-        $organizations = Organization::where('user_id', Auth::id())->get();
+    /** ---------- MAIN PAGE (Dashboard / Schedule Page) ---------- **/
+  public function index(Request $request)
+{
+    // Ambil semester dari query atau session
+    $selectedSemester = $request->semester ?? session('selected_semester');
 
-        return Inertia::render('schedule', [
-            'classSchedules' => $classSchedules,
-            'assignments' => $assignments,
-            'organizations' => $organizations,
-        ]);
+    // Simpan ke session kalau user baru memilih semester
+    if ($request->has('semester')) {
+        session(['selected_semester' => $request->semester]);
     }
 
+    // Jika belum ada apa pun -> ambil semester pertama pengguna
+    if (!$selectedSemester) {
+        $selectedSemester = Semester::where('user_id', Auth::id())->first()?->id;
+        session(['selected_semester' => $selectedSemester]);
+    }
+
+    $semesters = Semester::where('user_id', Auth::id())->get();
+
+    return inertia('schedule', [
+        'semesters' => $semesters,
+        'currentSemester' => $semesters->where('id', $selectedSemester)->first(),
+        'classSchedules' => ClassSchedule::where('semester_id', $selectedSemester)->get(),
+        'organizations' => Organization::where('user_id', Auth::id())->get(),
+    ]);
+}
+
+    /** ---------- CLASS SCHEDULE CRUD ---------- **/
     public function storeClassSchedule(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:100',
-            'day' => 'required|string|max:20',
-            'time' => 'required|string',
-            'lecturer' => 'required|string|max:100',
-            'room' => 'nullable|string|max:50',
-            'credits' => 'nullable|integer|min:0|max:6',
+        $validated = $request->validate([
+            'name'        => 'required|string|max:100',
+            'day'         => 'required|string|max:20',
+            'time'        => 'required|string',
+            'lecturer'    => 'required|string|max:100',
+            'room'        => 'nullable|string|max:50',
+            'credits'     => 'nullable|integer|min:0|max:6',
+            'semester_id' => 'required|exists:semesters,id',
         ]);
 
-        // Parse time into start_time and end_time
-        $times = explode('-', $request->time);
-        $startTime = $times[0] ?? null;
-        $endTime = $times[1] ?? null;
+        [$start, $end] = array_pad(explode('-', $validated['time']), 2, null);
 
         ClassSchedule::create([
-            'name' => $request->name,
-            'day' => $request->day,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'lecturer' => $request->lecturer,
-            'room' => $request->room,
-            'credits' => $request->credits,
-            'user_id' => Auth::id(),
+            ...$validated,
+            'start_time' => $start,
+            'end_time'   => $end,
+            'user_id'    => Auth::id(),
         ]);
 
-        return redirect()->back();
+        return back();
     }
 
     public function updateClassSchedule(Request $request, ClassSchedule $classSchedule)
     {
-        if ($classSchedule->user_id !== Auth::id()) {
-            abort(403);
-        }
+        abort_if($classSchedule->user_id !== Auth::id(), 403);
 
-        $request->validate([
-            'name' => 'required|string|max:100',
-            'day' => 'required|string|max:20',
-            'time' => 'required|string',
-            'lecturer' => 'required|string|max:100',
-            'room' => 'nullable|string|max:50',
-            'credits' => 'nullable|integer|min:1|max:6',
+        $validated = $request->validate([
+            'name'        => 'required|string|max:100',
+            'day'         => 'required|string|max:20',
+            'time'        => 'required|string',
+            'lecturer'    => 'required|string|max:100',
+            'room'        => 'nullable|string|max:50',
+            'credits'     => 'nullable|integer|min:1|max:6',
+            'semester_id' => 'required|exists:semesters,id',
         ]);
 
-        // Parse time into start_time and end_time
-        $times = explode('-', $request->time);
-        $startTime = $times[0] ?? null;
-        $endTime = $times[1] ?? null;
+        [$start, $end] = array_pad(explode('-', $validated['time']), 2, null);
 
         $classSchedule->update([
-            'name' => $request->name,
-            'day' => $request->day,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'lecturer' => $request->lecturer,
-            'room' => $request->room,
-            'credits' => $request->credits,
+            ...$validated,
+            'start_time' => $start,
+            'end_time'   => $end,
         ]);
 
-        return redirect()->back();
+        return back();
     }
 
     public function destroyClassSchedule(ClassSchedule $classSchedule)
     {
-        if ($classSchedule->user_id !== Auth::id()) {
-            abort(403);
-        }
+        abort_if($classSchedule->user_id !== Auth::id(), 403);
 
         $classSchedule->delete();
 
-        return redirect()->back();
+        return back();
     }
 
+
+
+
+    /** ---------- ASSIGNMENT CRUD ---------- **/
     public function storeAssignment(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:150',
-            'deadline' => 'required|date',
+        $validated = $request->validate([
+            'name'        => 'required|string|max:150',
+            'deadline'    => 'required|date',
             'description' => 'nullable|string',
         ]);
 
         Assignment::create([
-            'name' => $request->name,
-            'deadline' => $request->deadline,
-            'status' => 'pending',
-            'type' => 'akademik',
-            'description' => $request->description,
-            'user_id' => Auth::id(),
+            ...$validated,
+            'status'   => 'pending',
+            'type'     => 'akademik',
+            'user_id'  => Auth::id(),
         ]);
 
-        return redirect()->back();
+        return back();
     }
 
     public function updateAssignment(Request $request, Assignment $assignment)
     {
-        if ($assignment->user_id !== Auth::id()) {
-            abort(403);
-        }
+        abort_if($assignment->user_id !== Auth::id(), 403);
 
-        $request->validate([
-            'name' => 'nullable|string|max:150',
-            'deadline' => 'nullable|date',
-            'status' => 'nullable|string|in:pending,in-progress,done',
+        $validated = $request->validate([
+            'name'        => 'nullable|string|max:150',
+            'deadline'    => 'nullable|date',
+            'status'      => 'nullable|string|in:pending,in-progress,completed',
             'description' => 'nullable|string',
         ]);
 
-        $assignment->update([
-            'name' => $request->name ?: $assignment->name,
-            'deadline' => $request->deadline ?: $assignment->deadline,
-            'status' => $request->status ?? $assignment->status,
-            'type' => 'akademik',
-            'description' => $request->description,
-        ]);
+        $assignment->update(array_filter($validated));
 
-        return redirect()->back();
+        return back();
     }
 
     public function destroyAssignment(Assignment $assignment)
     {
-        if ($assignment->user_id !== Auth::id()) {
-            abort(403);
-        }
+        abort_if($assignment->user_id !== Auth::id(), 403);
 
         $assignment->delete();
 
-        return redirect()->back();
+        return back();
     }
 
     public function toggleAssignmentStatus(Assignment $assignment)
     {
-        if ($assignment->user_id !== Auth::id()) {
-            abort(403);
-        }
+        abort_if($assignment->user_id !== Auth::id(), 403);
 
-        $assignment->status = $assignment->status === 'pending' ? 'in-progress' : ($assignment->status === 'in-progress' ? 'completed' : 'pending');
+        $assignment->status = match ($assignment->status) {
+            'pending'      => 'in-progress',
+            'in-progress'  => 'completed',
+            default        => 'pending',
+        };
+
         $assignment->save();
 
-        return redirect()->back();
+        return back();
     }
 
+
+
+
+    /** ---------- ORGANIZATION CRUD ---------- **/
     public function storeOrganization(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:100',
-            'position' => 'nullable|string|max:100',
+        $validated = $request->validate([
+            'name'        => 'required|string|max:100',
+            'position'    => 'nullable|string|max:100',
             'description' => 'nullable|string',
         ]);
 
         Organization::create([
-            'name' => $request->name,
-            'position' => $request->position,
-            'description' => $request->description,
+            ...$validated,
             'user_id' => Auth::id(),
         ]);
 
-        return redirect()->back();
+        return back();
     }
 
     public function updateOrganization(Request $request, Organization $organization)
     {
-        if ($organization->user_id !== Auth::id()) {
-            abort(403);
-        }
+        abort_if($organization->user_id !== Auth::id(), 403);
 
-        $request->validate([
-            'name' => 'required|string|max:100',
-            'position' => 'nullable|string|max:100',
+        $validated = $request->validate([
+            'name'        => 'required|string|max:100',
+            'position'    => 'nullable|string|max:100',
             'description' => 'nullable|string',
         ]);
 
-        $organization->update($request->only(['name', 'position', 'description']));
+        $organization->update($validated);
 
-        return redirect()->back();
+        return back();
     }
 
     public function destroyOrganization(Organization $organization)
     {
-        if ($organization->user_id !== Auth::id()) {
-            abort(403);
-        }
+        abort_if($organization->user_id !== Auth::id(), 403);
 
         $organization->delete();
 
-        return redirect()->back();
+        return back();
     }
 
+
+
+
+    /** ---------- SEMESTER CRUD ---------- **/
+    public function storeSemester(Request $request)
+    {
+        $validated = $request->validate([
+            'number' => 'required|integer|min:1|max:12|unique:semesters,number,NULL,id,user_id,' . Auth::id(),
+        ]);
+
+        Semester::create([
+            ...$validated,
+            'user_id' => Auth::id(),
+        ]);
+
+        return back();
+    }
+
+    public function updateSemester(Request $request, Semester $semester)
+    {
+        abort_if($semester->user_id !== Auth::id(), 403);
+
+        $validated = $request->validate([
+            'number' => 'required|integer|min:1|max:12|unique:semesters,number,' . $semester->id . ',id,user_id,' . Auth::id(),
+        ]);
+
+        $semester->update($validated);
+
+        return back();
+    }
+
+    public function destroySemester(Semester $semester)
+    {
+        abort_if($semester->user_id !== Auth::id(), 403);
+
+        if ($semester->classSchedules()->exists()) {
+            return back()->withErrors(['error' => 'Semester tidak dapat dihapus karena masih memiliki jadwal.']);
+        }
+
+        $semester->delete();
+
+        return back();
+    }
+
+
+
+    /** ---------- Other ---------- **/
     public function chat()
     {
         return Inertia::render('chat');

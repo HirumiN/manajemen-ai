@@ -5,32 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ClassSchedule extends Model
+class Semester extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'day',
-        'start_time',
-        'end_time',
-        'lecturer',
-        'room',
-        'credits',
+        'number',
         'user_id',
-        'semester_id',
     ];
 
-    protected $table = 'class_schedules';
+    protected $table = 'semesters';
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function semester(): BelongsTo
+    public function classSchedules(): HasMany
     {
-        return $this->belongsTo(Semester::class);
+        return $this->hasMany(ClassSchedule::class);
     }
 }
